@@ -1,0 +1,17 @@
+{
+  "name": "loomsmith",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.30.3",
+  "engines": { "node": ">=22.18" },
+  "scripts": {
+    "test": "vitest run",
+    "typecheck": "tsc -p packages/core/tsconfig.json && tsc -p packages/core/tsconfig.test.json",
+    "check": "pnpm typecheck && pnpm test"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.4",
+    "typescript": "7.0.2",
+    "vitest": "5.0.2"
+  }
+}
