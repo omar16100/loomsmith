@@ -42,3 +42,9 @@
 - [ ] Later: `S_DUPLICATE_ID` path is the bare id
 - [ ] Later: `check_reviews` is O(n^2)
 - [ ] Later: test-coverage minors: memory logger debug, nested strict schemas, `format_issues` root, double-run determinism, `update_project` expect mismatch, seal quantity > 1, tol-null lengths, `round_mm` fractions, MISSING fallbacks
+
+## Residuals from the codex SRS re-check (27 Sep 2026, /Users/macmini/projects/codex/loomsmith_m1_srs_recheck_27092026.txt)
+- [ ] Before M2 (first non-test caller): `derive_test_data` must always build its own index; a stale caller-supplied index can bypass SRS exclusion.
+- [ ] When the API is public: `derive_test_data` ignores non-enumerable `mating_states` keys (JSON inputs are fine).
+- [ ] M1b freeze decision: restoring a value that an older review rejected yields only `W_REVIEW_STALE` (latest-review policy); decide whether any rejection of the current value should block.
+- [ ] M2 perf: `derive_test_data` runs `validate_structure` on every call.
