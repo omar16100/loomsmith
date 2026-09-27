@@ -120,6 +120,16 @@ describe("validate_structure", () => {
     expect(find(bad, "S_FIELD_UNKNOWN")).toContainEqual(expect.objectContaining({ path: "reviews/r1/field" }));
   });
 
+  it("flags a review dated after the document's current revision", () => {
+    const doc = small_doc();
+    const bad = {
+      ...doc,
+      revision: 0,
+      reviews: [{ id: "r_future", entity_id: "w1", field: "label", status: "approved" as const, reviewed_value_json: "\"W1\"", revision: 100 }],
+    };
+    expect(find(bad, "S_REVIEW_FUTURE_REVISION")).toContainEqual(expect.objectContaining({ path: "reviews/r_future/revision", entity_id: "r_future" }));
+  });
+
   it("flags a splice holding more wire ends than its capacity", () => {
     const doc = small_doc();
     const ends = (i: number) => wire(`ws${i}`, "h1", `WS${i}`, [to_splice("sp1"), open_end], spec(0.5, "R"), null);

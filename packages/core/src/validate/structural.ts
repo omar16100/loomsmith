@@ -219,6 +219,9 @@ function check_evidence(doc: LoomDocument, index: DocIndex, emit: Emit): void {
   for (const r of doc.reviews) {
     if (!index.by_id.has(r.entity_id)) emit("S_REF_MISSING", `entity ${r.entity_id} not found`, entity_path("reviews", r.id, "entity_id"), r.id, "review an existing entity");
     else if (!has_field(index, r.entity_id, r.field)) emit("S_FIELD_UNKNOWN", `${r.entity_id} has no field ${r.field}`, entity_path("reviews", r.id, "field"), r.id, "use a top-level field name of the entity");
+    if (r.revision > doc.revision) {
+      emit("S_REVIEW_FUTURE_REVISION", `review revision ${r.revision} is ahead of the document's revision ${doc.revision}`, entity_path("reviews", r.id, "revision"), r.id, "reviews are recorded at or before the document's current revision");
+    }
   }
   const positions = new Set<string>();
   for (const p of doc.view_positions) {
