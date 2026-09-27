@@ -88,7 +88,8 @@ function check_reviews(doc: LoomDocument, index: DocIndex, emit: Emit): void {
     if (state === "stale") {
       emit("W_REVIEW_STALE", "warning", `${r.entity_id}.${r.field} changed after it was reviewed`, entity_path("reviews", r.id), r.entity_id, "review the new value");
     } else if (state === "rejected") {
-      emit("W_REVIEW_REJECTED", "warning", `${r.entity_id}.${r.field} was reviewed and rejected`, entity_path("reviews", r.id), r.entity_id, "record a corrected value for this field");
+      // An M_ code with severity error: a value the reviewer rejected blocks a build like any other missing fact.
+      emit("M_REVIEW_REJECTED", "error", `${r.entity_id}.${r.field} was reviewed and rejected`, entity_path("reviews", r.id), r.entity_id, "record a corrected value for this field");
     }
   }
 }

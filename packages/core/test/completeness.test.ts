@@ -6,7 +6,19 @@ import { evidence_state, make_review, review_state } from "../src/validate/revie
 import { is_release_ready, validate } from "../src/validate/validate.ts";
 import { build_synthetic_milestone } from "./fixtures/synthetic_milestone.ts";
 import { apply_ok } from "./helpers/apply.ts";
-import { to_contact } from "./helpers/entities.ts";
+import { identified, part, small_doc, to_contact } from "./helpers/entities.ts";
+import type { LoomDocument } from "../src/schema/document.ts";
+
+// small_doc with every part identified: a document with no completeness issue at all.
+function complete_small_doc(): LoomDocument {
+  const base = small_doc();
+  return {
+    ...base,
+    parts: [part("p_housing", "housing", "SYN-H2", "2-way housing (synthetic)"), part("p_terminal", "terminal", "SYN-T1", "terminal (synthetic)")],
+    connectors: base.connectors.map((c) => ({ ...c, housing: identified("p_housing") })),
+    contacts: base.contacts.map((k) => ({ ...k, terminal: identified("p_terminal") })),
+  };
+}
 
 describe("completeness validation", () => {
   it("lists exactly what blocks a build of the fixture", () => {
@@ -61,7 +73,16 @@ describe("completeness validation", () => {
       cmd_insert("reviews", make_review(doc, index, { id: "r_seg_b1_x1", entity_id: "seg_b1_x1", field: "length", status: "rejected" })),
     ], "b_reject_seg_b1_x1");
     const codes = validate_completeness(rejected).map((issue) => `${issue.code}:${issue.entity_id}`);
-    expect(codes).toContain("W_REVIEW_REJECTED:seg_b1_x1");
+    expect(codes).toContain("M_REVIEW_REJECTED:seg_b1_x1");
+  });
+
+  it("blocks release on a rejected review even when nothing else is missing", () => {
+    const complete = complete_small_doc();
+    expect(validate(complete, { level: "build", harness_ids: null })).toEqual([]);
+    const review = make_review(complete, build_index(complete), { id: "r_w1_spec", entity_id: "w1", field: "spec", status: "rejected" });
+    const issues = validate({ ...complete, reviews: [review] }, { level: "build", harness_ids: null });
+    expect(issues.map((issue) => `${issue.code}:${issue.severity}:${issue.entity_id}`)).toEqual(["M_REVIEW_REJECTED:error:w1"]);
+    expect(is_release_ready(issues)).toBe(false);
   });
 
   it("marks evidence stale when the measured value changes", () => {
