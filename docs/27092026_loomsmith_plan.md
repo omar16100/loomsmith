@@ -3336,17 +3336,17 @@ parsnip entity add --type project -o "loomsmith: open-source wiring harness tool
 | Task | State |
 |---|---|
 | M0 docs, licence, git init | done 27 Sep 2026 |
-| 1 Workspace scaffold and logger | todo |
-| 2 Schemas | todo |
-| 3 Canonical form and loader | todo |
-| 4 Structural validation | todo |
-| 5 Command reducer | todo |
-| 6 Synthetic fixture | todo |
-| 7 Routes and lengths | todo |
-| 8 Completeness and reviews | todo |
-| 9 Nets and test data | todo |
-| 10 Wire list and BOM | todo |
-| 11 Docs, review, hand-off | todo |
+| 1 Workspace scaffold and logger | done 27 Sep 2026 |
+| 2 Schemas | done 27 Sep 2026 |
+| 3 Canonical form and loader | done 27 Sep 2026 |
+| 4 Structural validation | done 27 Sep 2026 |
+| 5 Command reducer | done 27 Sep 2026 |
+| 6 Synthetic fixture | done 27 Sep 2026 |
+| 7 Routes and lengths | done 27 Sep 2026 |
+| 8 Completeness and reviews | done 27 Sep 2026 |
+| 9 Nets and test data | done 27 Sep 2026 |
+| 10 Wire list and BOM | done 27 Sep 2026 |
+| 11 Docs, review, hand-off | done 27 Sep 2026 |
 
 ## Decisions
 
@@ -3369,3 +3369,4 @@ parsnip entity add --type project -o "loomsmith: open-source wiring harness tool
 
 - Vitest browser-mode parity runs are deferred to M4 (web tooling arrives there). Core purity is enforced now by a `types: []` tsconfig and the ast-grep scan in Task 11.
 - Cascading deletes are not in M1: a delete that would dangle references is rejected.
+- Controller rulings during execution: R1 (in_scope reuse), R2 (shared format_issues), R6 (commit messages rewritten on the unpushed branch to strip attribution trailers).

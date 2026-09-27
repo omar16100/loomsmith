@@ -23,3 +23,4 @@ loomsmith (working codename) is an open-source wiring harness design tool: one h
 | [c4model.md](c4model.md) | Architecture | Target containers (core, cli, ingest, web), core components, data flows and invariants. |
 | [27092026_loomsmith_design.md](27092026_loomsmith_design.md) | Design / spec | Approved design: first principles, decisions (Apache-2.0, TS, JSON format, snake_case), data model, evidence/review, command log contract, validation levels, test boundary, LLM ingest, milestones M0 to M6, risks, verification. |
 | [27092026_loomsmith_plan.md](27092026_loomsmith_plan.md) | Plan / task record | Implementation plan with task status, decisions and deviations. |
+| [data_model.md](data_model.md) | Reference | File format, entities, evidence/review model, command log contract, validation codes (`S_*`, `M_*`, `W_*`) and derivations implemented in `@loomsmith/core` (M1). |

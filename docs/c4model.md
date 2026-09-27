@@ -2,7 +2,9 @@
 
 Category: Architecture. Source of truth for containers, components, dependencies and data flows. Update on every architecture change. Design rationale: /Users/macmini/projects/loomsmith/docs/27092026_loomsmith_design.md.
 
-Last updated: 27 Sep 2026 (M0, nothing implemented yet; everything below is the target architecture).
+Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`, 72 tests
+pass; `packages/cli`, `packages/ingest`, `apps/web`, `eval/` are still target architecture,
+not built).
 
 ## Level 1: system context
 
@@ -17,28 +19,36 @@ Last updated: 27 Sep 2026 (M0, nothing implemented yet; everything below is the 
 
 ## Level 2: containers
 
-| Container | Tech | Responsibility | Depends on |
-|---|---|---|---|
-| `packages/core` | TypeScript, zod v4, no DOM/fs/network/clock/RNG | Schema, command log reducer, validation, derivations, exports as strings, migrations, asset manifest, logger interface | none at runtime except zod |
-| `packages/cli` | Node 22+ | File IO, id/timestamp generation, commands `validate`, `migrate`, `export`, `new`, `apply`, `ingest` | core, ingest |
-| `packages/ingest` | TypeScript, pdf.js, Anthropic SDK (M3/M5) | PDF parse -> candidate graph -> LLM resolution -> proposals file | core |
-| `apps/web` | Vite, React, SVG | Editor, IndexedDB autosave, File System Access API, proposal review | core |
-| `examples/` | JSON | Synthetic golden fixtures | core schema |
-| `eval/` | JSON + reports | Ingest spike labels and metrics; OEM pages referenced by hash only | ingest |
+| Container | Tech | Responsibility | Depends on | Status |
+|---|---|---|---|---|
+| `packages/core` | TypeScript, zod v4, no DOM/fs/network/clock/RNG | Schema, command log reducer, validation, derivations, exports as strings, migrations, asset manifest, logger interface | none at runtime except zod | **Implemented (M1)** |
+| `packages/cli` | Node 22+ | File IO, id/timestamp generation, commands `validate`, `migrate`, `export`, `new`, `apply`, `ingest` | core, ingest | Not built (M2) |
+| `packages/ingest` | TypeScript, pdf.js, Anthropic SDK (M3/M5) | PDF parse -> candidate graph -> LLM resolution -> proposals file | core | Not built (M3/M5) |
+| `apps/web` | Vite, React, SVG | Editor, IndexedDB autosave, File System Access API, proposal review | core | Not built (M4) |
+| `examples/` | JSON | Synthetic golden fixtures | core schema | Implemented: `examples/synthetic_milestone/synthetic_milestone.loom.json` |
+| `eval/` | JSON + reports | Ingest spike labels and metrics; OEM pages referenced by hash only | ingest | Not built (M3) |
 
 ## Level 3: core components
 
+Implemented in M1 unless noted. See `/Users/macmini/projects/loomsmith/docs/data_model.md`
+for the file format, entity fields, validation codes and derivation rules.
+
 | Component | Responsibility |
 |---|---|
-| `schema/` | zod schemas for the document, command batches, proposals; generated JSON Schema |
-| `model/` | Types, id helpers (ids passed in), canonical ordering, lookup indexes |
-| `commands/` | Command definitions with preconditions, reducer `apply_batch(doc, batch) -> result`, inverses, idempotency by batch_id, expected_revision check |
-| `validate/` | Structural checks and manufacturing-completeness checks, issue objects with code, severity, JSON path, entity id, fix hint |
-| `derive/` | Nets, route lengths, cut lengths with tolerance, BOM, wire list, test data for a bench boundary |
-| `export/` | CSV, SVG, HTML string renderers of derived data |
-| `migrate/` | schema_version migrations, history checkpointing |
-| `assets/` | Asset manifest: logical id, sha256, media type, page/bbox convention |
+| `schema/document.ts`, `schema/primitives.ts`, `schema/commands.ts` | zod schemas for the document, command batches |
+| `schema/json_schema.ts` | Generated JSON Schema |
+| `schema/format_issues.ts` | Shared `format_issues` helper: turns zod issues into `"path: message"` strings, used by `load_document`, `apply_command` and `apply_batch` |
+| `model/canonical.ts` | Key sorting, canonical json, collection ordering |
+| `model/empty_document.ts` | Empty document factory |
+| `model/doc_index.ts` | Lookup maps and endpoint keys |
+| `model/scope.ts` | `ScopeOptions`/`in_scope`: harness-id scope filter shared by `validate/completeness.ts` and `derive/nets.ts`, `derive/test_data.ts`, `derive/wire_list.ts`, `derive/bom.ts` |
+| `migrate/load_document.ts` | schema_version checks, migrations, parse |
+| `validate/issue.ts`, `validate/structural.ts`, `validate/completeness.ts`, `validate/review_state.ts`, `validate/validate.ts` | Structural checks (`S_*`) and manufacturing-completeness checks (`M_*`, `W_*`), issue objects with code, severity, JSON path, entity id, fix hint; evidence/review staleness |
+| `commands/builders.ts`, `commands/apply_command.ts`, `commands/apply_batch.ts` | Command definitions with preconditions, reducer `apply_batch(doc, batch) -> result`, inverses, idempotency by batch_id, expected_revision check |
+| `derive/topology.ts`, `derive/nets.ts`, `derive/test_data.ts`, `derive/wire_list.ts`, `derive/bom.ts` | Route analysis, route/cut lengths, union-find nets with mating states, bench continuity/isolation test data, wire list, BOM |
 | `log.ts` | Logger interface injected by callers |
+| `export/` | Not built yet (M2+): CSV, SVG, HTML string renderers of derived data |
+| `assets/` | Not built yet: asset manifest module (the `assets` collection and `blob_ref` convention exist in `schema/document.ts` now; a dedicated manifest builder is future work) |
 
 ## Data flows
 
