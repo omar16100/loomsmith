@@ -15,3 +15,6 @@ export * from "./commands/apply_command.ts";
 export * from "./commands/apply_batch.ts";
 export * from "./validate/review_state.ts";
 export * from "./derive/topology.ts";
+export * from "./model/scope.ts";
+export * from "./validate/completeness.ts";
+export * from "./validate/validate.ts";
