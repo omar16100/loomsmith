@@ -20,3 +20,5 @@ export * from "./validate/completeness.ts";
 export * from "./validate/validate.ts";
 export * from "./derive/nets.ts";
 export * from "./derive/test_data.ts";
+export * from "./derive/wire_list.ts";
+export * from "./derive/bom.ts";
