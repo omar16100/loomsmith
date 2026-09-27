@@ -6,7 +6,7 @@ import { evidence_state, make_review, review_state } from "../src/validate/revie
 import { is_release_ready, validate } from "../src/validate/validate.ts";
 import { build_synthetic_milestone } from "./fixtures/synthetic_milestone.ts";
 import { apply_ok } from "./helpers/apply.ts";
-import { identified, part, small_doc, to_contact } from "./helpers/entities.ts";
+import { connector, contact, identified, node, open_end, part, segment, small_doc, to_contact } from "./helpers/entities.ts";
 import type { LoomDocument } from "../src/schema/document.ts";
 
 // small_doc with every part identified: a document with no completeness issue at all.
@@ -83,6 +83,37 @@ describe("completeness validation", () => {
     const issues = validate({ ...complete, reviews: [review] }, { level: "build", harness_ids: null });
     expect(issues.map((issue) => `${issue.code}:${issue.severity}:${issue.entity_id}`)).toEqual(["M_REVIEW_REJECTED:error:w1"]);
     expect(is_release_ready(issues)).toBe(false);
+  });
+
+  it("flags an open wire end", () => {
+    const complete = complete_small_doc();
+    const open = { ...complete, wires: complete.wires.map((w) => ({ ...w, ends: [w.ends[0], open_end] as typeof w.ends })) };
+    const issues = validate(open, { level: "build", harness_ids: null });
+    expect(issues.map((issue) => `${issue.code}:${issue.severity}:${issue.path}`)).toEqual(["M_WIRE_END_OPEN:error:wires/w1/ends/1"]);
+  });
+
+  it("flags a wire end whose connector has no topology node", () => {
+    const complete = complete_small_doc();
+    const no_node = {
+      ...complete,
+      connectors: [...complete.connectors, { ...connector("j3", "h1", "J3", ["1"]), housing: identified("p_housing") }],
+      contacts: [...complete.contacts, { ...contact("j3", "1"), terminal: identified("p_terminal") }],
+      wires: complete.wires.map((w) => ({ ...w, ends: [w.ends[0], to_contact("j3", "1")] as typeof w.ends })),
+    };
+    const issues = validate(no_node, { level: "build", harness_ids: null });
+    expect(issues.map((issue) => `${issue.code}:${issue.severity}:${issue.path}`)).toEqual(["M_ENDPOINT_NODE_MISSING:error:wires/w1/route"]);
+  });
+
+  it("flags a route that does not join the wire's two ends", () => {
+    const complete = complete_small_doc();
+    const detour = {
+      ...complete,
+      nodes: [...complete.nodes, node("n_b1", "h1", "breakout", null)],
+      segments: [...complete.segments, segment("s2", "h1", "n_j1", "n_b1", 100, 2)],
+      wires: complete.wires.map((w) => ({ ...w, route: ["s2"] })),
+    };
+    const issues = validate(detour, { level: "build", harness_ids: null });
+    expect(issues.map((issue) => `${issue.code}:${issue.severity}:${issue.path}`)).toEqual(["M_ROUTE_NOT_CONTIGUOUS:error:wires/w1/route"]);
   });
 
   it("marks evidence stale when the measured value changes", () => {

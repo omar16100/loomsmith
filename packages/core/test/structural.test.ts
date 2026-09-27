@@ -72,6 +72,48 @@ describe("validate_structure", () => {
     expect(find(bad, "S_MATING_INVALID")).toContainEqual(expect.objectContaining({ path: "matings/m1/cavity_map/0" }));
   });
 
+  it("flags a cavity id repeated within one connector", () => {
+    const doc = small_doc();
+    const bad = {
+      ...doc,
+      connectors: doc.connectors.map((c) => (c.id === "j1" ? { ...c, cavities: [...c.cavities, { id: "j1_c1", label: "3" }] } : c)),
+    };
+    expect(validate_structure(bad)).toEqual([
+      expect.objectContaining({ code: "S_DUPLICATE_CAVITY", path: "connectors/j1/cavities/j1_c1", entity_id: "j1", severity: "error" }),
+    ]);
+  });
+
+  it("flags a second node referring to the same connector", () => {
+    const doc = small_doc();
+    const bad = { ...doc, nodes: [...doc.nodes, node("n_j1b", "h1", "connector", "j1")] };
+    expect(validate_structure(bad)).toEqual([
+      expect.objectContaining({ code: "S_NODE_DUPLICATE_REF", path: "nodes/n_j1b/ref_id", entity_id: "n_j1b" }),
+    ]);
+  });
+
+  it("flags a connector mated with itself", () => {
+    const doc = small_doc();
+    const bad = { ...doc, matings: [{ id: "m_self", connector_a: "j1", connector_b: "j1", cavity_map: [{ cavity_a: "j1_c1", cavity_b: "j1_c2" }] }] };
+    expect(validate_structure(bad)).toEqual([
+      expect.objectContaining({ code: "S_MATING_INVALID", path: "matings/m_self", entity_id: "m_self", message: "a connector cannot mate with itself" }),
+    ]);
+  });
+
+  it("flags a connector that appears in two matings", () => {
+    const doc = small_doc();
+    const bad = {
+      ...doc,
+      connectors: [...doc.connectors, connector("j3", "h1", "J3", ["1"])],
+      matings: [
+        { id: "m1", connector_a: "j1", connector_b: "j2", cavity_map: [{ cavity_a: "j1_c2", cavity_b: "j2_c2" }] },
+        { id: "m2", connector_a: "j1", connector_b: "j3", cavity_map: [{ cavity_a: "j1_c1", cavity_b: "j3_c1" }] },
+      ],
+    };
+    expect(validate_structure(bad)).toEqual([
+      expect.objectContaining({ code: "S_MATING_INVALID", path: "connectors/j1", entity_id: "j1", message: "connector j1 is in 2 matings" }),
+    ]);
+  });
+
   it("flags an id reused across collections", () => {
     const doc = small_doc();
     const bad = { ...doc, ground_points: [ground("j1", "h1", "G1")] };
