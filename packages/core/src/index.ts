@@ -18,3 +18,5 @@ export * from "./derive/topology.ts";
 export * from "./model/scope.ts";
 export * from "./validate/completeness.ts";
 export * from "./validate/validate.ts";
+export * from "./derive/nets.ts";
+export * from "./derive/test_data.ts";
