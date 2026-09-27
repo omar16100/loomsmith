@@ -48,6 +48,13 @@ describe("document schema", () => {
     expect(document_schema.safeParse(with_asset("\\\\server\\share\\ewd.pdf")).success).toBe(false);
   });
 
+  it("rejects ':' in labels so a CONNECTOR:CAVITY probe label can never equal another label", () => {
+    expect(document_schema.safeParse({ ...minimal, harnesses: [{ id: "h1", label: "J1:3" }] }).success).toBe(false);
+    expect(wire_schema.safeParse({ ...schematic_wire, label: "W:1" }).success).toBe(false);
+    expect(document_schema.safeParse({ ...minimal, project: { label: "A:B" } }).success).toBe(false);
+    expect(document_schema.safeParse({ ...minimal, harnesses: [{ id: "h1", label: "J1-3 (main)" }] }).success).toBe(true);
+  });
+
   it("accepts a schematic-only wire with unknown spec and no route", () => {
     expect(wire_schema.safeParse(schematic_wire).success).toBe(true);
   });

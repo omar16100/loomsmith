@@ -1,7 +1,7 @@
 import { compare_strings } from "../model/canonical.ts";
 import { build_index, cavity_key, endpoint_key, push_to, type DocIndex } from "../model/doc_index.ts";
 import { in_scope } from "../model/scope.ts";
-import type { LoomDocument } from "../schema/document.ts";
+import type { LoomDocument, Mating } from "../schema/document.ts";
 
 export type MatingState = "connected" | "disconnected";
 
@@ -21,6 +21,24 @@ export interface Net {
 // must not shadow the caller's default_mating_state with a prototype value.
 export function mating_state(states: Readonly<Record<string, MatingState>>, id: string, fallback: MatingState): MatingState {
   return Object.hasOwn(states, id) ? states[id]! : fallback;
+}
+
+// The one place that decides which matings join harnesses: connected (explicitly, or by default_state) and
+// with both connectors present and in scope. derive_nets and derive_test_data both use it.
+export function active_matings(
+  doc: LoomDocument,
+  index: DocIndex,
+  harness_ids: readonly string[] | null,
+  mating_states: Readonly<Record<string, MatingState>>,
+  default_state: MatingState,
+): Mating[] {
+  const scope_options = { harness_ids };
+  return doc.matings.filter((m) => {
+    if (mating_state(mating_states, m.id, default_state) !== "connected") return false;
+    const a = index.connectors.get(m.connector_a);
+    const b = index.connectors.get(m.connector_b);
+    return a !== undefined && b !== undefined && in_scope(scope_options, a.harness_id) && in_scope(scope_options, b.harness_id);
+  });
 }
 
 function make_union_find() {
@@ -62,14 +80,10 @@ export function derive_nets(doc: LoomDocument, options: NetOptions, index: DocIn
     if (b !== null) uf.find(b);
     if (a !== null && b !== null) uf.union(a, b);
   }
-  for (const m of doc.matings) {
-    if (mating_state(options.mating_states, m.id, options.default_mating_state) !== "connected") continue;
-    const a = index.connectors.get(m.connector_a);
-    const b = index.connectors.get(m.connector_b);
-    if (!a || !b || !in_scope(scope_options, a.harness_id) || !in_scope(scope_options, b.harness_id)) continue;
+  for (const m of active_matings(doc, index, options.harness_ids, options.mating_states, options.default_mating_state)) {
     for (const pair of m.cavity_map) {
-      const contact_a = index.contacts_by_cavity.get(cavity_key(a.id, pair.cavity_a))?.[0];
-      const contact_b = index.contacts_by_cavity.get(cavity_key(b.id, pair.cavity_b))?.[0];
+      const contact_a = index.contacts_by_cavity.get(cavity_key(m.connector_a, pair.cavity_a))?.[0];
+      const contact_b = index.contacts_by_cavity.get(cavity_key(m.connector_b, pair.cavity_b))?.[0];
       if (contact_a && contact_b) uf.union(`contact:${contact_a.id}`, `contact:${contact_b.id}`);
     }
   }

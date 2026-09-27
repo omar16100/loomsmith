@@ -32,7 +32,8 @@
         "label": {
           "type": "string",
           "minLength": 1,
-          "maxLength": 64
+          "maxLength": 64,
+          "pattern": "^[^:]*$"
         }
       },
       "required": [
@@ -52,7 +53,8 @@
           "label": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "pattern": "^[^:]*$"
           }
         },
         "required": [
@@ -146,7 +148,8 @@
           "label": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "pattern": "^[^:]*$"
           },
           "face_view": {
             "anyOf": [
@@ -251,7 +254,8 @@
                 "label": {
                   "type": "string",
                   "minLength": 1,
-                  "maxLength": 64
+                  "maxLength": 64,
+                  "pattern": "^[^:]*$"
                 }
               },
               "required": [
@@ -458,7 +462,8 @@
           "label": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "pattern": "^[^:]*$"
           },
           "part": {
             "type": "object",
@@ -540,7 +545,8 @@
           "label": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "pattern": "^[^:]*$"
           }
         },
         "required": [
@@ -567,7 +573,8 @@
           "label": {
             "type": "string",
             "minLength": 1,
-            "maxLength": 64
+            "maxLength": 64,
+            "pattern": "^[^:]*$"
           },
           "ends": {
             "type": "array",

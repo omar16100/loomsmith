@@ -2,7 +2,9 @@ import * as z from "zod";
 
 // Restricted alphabet so composite keys ("contact:<id>", "<connector>/<cavity>") can never collide.
 export const id_schema = z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/);
-export const label_schema = z.string().min(1).max(64);
+// No ":" in labels: a bench probe label is "<connector label>:<cavity label>", so it can never equal a
+// ground point label or another probe label.
+export const label_schema = z.string().min(1).max(64).regex(/^[^:]*$/);
 export const text_schema = z.string().min(1).max(500).nullable();
 
 export const part_use_schema = z.strictObject({
