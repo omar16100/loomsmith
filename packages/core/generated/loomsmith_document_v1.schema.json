@@ -1,0 +1,1260 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "properties": {
+    "format": {
+      "type": "string",
+      "const": "loomsmith"
+    },
+    "schema_version": {
+      "type": "number",
+      "const": 1
+    },
+    "document_id": {
+      "type": "string",
+      "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 0,
+      "maximum": 9007199254740991
+    },
+    "applied_batch_ids": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+      }
+    },
+    "project": {
+      "type": "object",
+      "properties": {
+        "label": {
+          "type": "string",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      },
+      "required": [
+        "label"
+      ],
+      "additionalProperties": false
+    },
+    "harnesses": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "id",
+          "label"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "parts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "housing",
+              "terminal",
+              "seal",
+              "splice",
+              "wire",
+              "covering",
+              "other"
+            ]
+          },
+          "manufacturer": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "part_number": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "description": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "kind",
+          "manufacturer",
+          "part_number",
+          "description"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "connectors": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "harness_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "face_view": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "mating_face",
+                  "wire_entry"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "housing_gender": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "male",
+                  "female"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "safety_class": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "srs"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "housing": {
+            "type": "object",
+            "properties": {
+              "part_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "identification": {
+                "type": "string",
+                "enum": [
+                  "identified",
+                  "candidate",
+                  "unknown"
+                ]
+              },
+              "compatibility": {
+                "type": "string",
+                "enum": [
+                  "compatible",
+                  "incompatible",
+                  "unknown"
+                ]
+              },
+              "procurement": {
+                "type": "string",
+                "enum": [
+                  "available",
+                  "unavailable",
+                  "reused",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "part_id",
+              "identification",
+              "compatibility",
+              "procurement"
+            ],
+            "additionalProperties": false
+          },
+          "cavities": {
+            "minItems": 1,
+            "maxItems": 256,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                },
+                "label": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 64
+                }
+              },
+              "required": [
+                "id",
+                "label"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "harness_id",
+          "label",
+          "face_view",
+          "housing_gender",
+          "safety_class",
+          "housing",
+          "cavities"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "contacts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "connector_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "cavity_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "contact_gender": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "male",
+                  "female"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "terminal": {
+            "type": "object",
+            "properties": {
+              "part_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "identification": {
+                "type": "string",
+                "enum": [
+                  "identified",
+                  "candidate",
+                  "unknown"
+                ]
+              },
+              "compatibility": {
+                "type": "string",
+                "enum": [
+                  "compatible",
+                  "incompatible",
+                  "unknown"
+                ]
+              },
+              "procurement": {
+                "type": "string",
+                "enum": [
+                  "available",
+                  "unavailable",
+                  "reused",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "part_id",
+              "identification",
+              "compatibility",
+              "procurement"
+            ],
+            "additionalProperties": false
+          },
+          "seal": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "part": {
+                    "type": "object",
+                    "properties": {
+                      "part_id": {
+                        "anyOf": [
+                          {
+                            "type": "string",
+                            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "identification": {
+                        "type": "string",
+                        "enum": [
+                          "identified",
+                          "candidate",
+                          "unknown"
+                        ]
+                      },
+                      "compatibility": {
+                        "type": "string",
+                        "enum": [
+                          "compatible",
+                          "incompatible",
+                          "unknown"
+                        ]
+                      },
+                      "procurement": {
+                        "type": "string",
+                        "enum": [
+                          "available",
+                          "unavailable",
+                          "reused",
+                          "unknown"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "part_id",
+                      "identification",
+                      "compatibility",
+                      "procurement"
+                    ],
+                    "additionalProperties": false
+                  },
+                  "quantity": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 4
+                  }
+                },
+                "required": [
+                  "part",
+                  "quantity"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_wire_ends": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4
+          }
+        },
+        "required": [
+          "id",
+          "connector_id",
+          "cavity_id",
+          "contact_gender",
+          "terminal",
+          "seal",
+          "max_wire_ends"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "splices": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "harness_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "part": {
+            "type": "object",
+            "properties": {
+              "part_id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "identification": {
+                "type": "string",
+                "enum": [
+                  "identified",
+                  "candidate",
+                  "unknown"
+                ]
+              },
+              "compatibility": {
+                "type": "string",
+                "enum": [
+                  "compatible",
+                  "incompatible",
+                  "unknown"
+                ]
+              },
+              "procurement": {
+                "type": "string",
+                "enum": [
+                  "available",
+                  "unavailable",
+                  "reused",
+                  "unknown"
+                ]
+              }
+            },
+            "required": [
+              "part_id",
+              "identification",
+              "compatibility",
+              "procurement"
+            ],
+            "additionalProperties": false
+          },
+          "max_wire_ends": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 32
+          }
+        },
+        "required": [
+          "id",
+          "harness_id",
+          "label",
+          "part",
+          "max_wire_ends"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "ground_points": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "harness_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          }
+        },
+        "required": [
+          "id",
+          "harness_id",
+          "label"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "wires": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "harness_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "ends": {
+            "type": "array",
+            "prefixItems": [
+              {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "contact"
+                      },
+                      "contact_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "contact_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "splice"
+                      },
+                      "splice_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "splice_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "ground_point"
+                      },
+                      "ground_point_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "ground_point_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "open"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              },
+              {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "contact"
+                      },
+                      "contact_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "contact_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "splice"
+                      },
+                      "splice_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "splice_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "ground_point"
+                      },
+                      "ground_point_id": {
+                        "type": "string",
+                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                      }
+                    },
+                    "required": [
+                      "kind",
+                      "ground_point_id"
+                    ],
+                    "additionalProperties": false
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "const": "open"
+                      }
+                    },
+                    "required": [
+                      "kind"
+                    ],
+                    "additionalProperties": false
+                  }
+                ]
+              }
+            ],
+            "items": false,
+            "minItems": 2,
+            "maxItems": 2
+          },
+          "spec": {
+            "type": "object",
+            "properties": {
+              "cross_section_mm2": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "designation": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "base_colour": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 16
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "stripe_colours": {
+                "maxItems": 3,
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 16
+                }
+              },
+              "insulation": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "cross_section_mm2",
+              "designation",
+              "base_colour",
+              "stripe_colours",
+              "insulation"
+            ],
+            "additionalProperties": false
+          },
+          "route": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allowances": {
+            "type": "object",
+            "properties": {
+              "end_a_mm": {
+                "type": "number",
+                "minimum": 0
+              },
+              "end_b_mm": {
+                "type": "number",
+                "minimum": 0
+              },
+              "service_mm": {
+                "type": "number",
+                "minimum": 0
+              }
+            },
+            "required": [
+              "end_a_mm",
+              "end_b_mm",
+              "service_mm"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "harness_id",
+          "label",
+          "ends",
+          "spec",
+          "route",
+          "allowances"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "nodes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "harness_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "connector",
+              "breakout",
+              "clip",
+              "grommet",
+              "splice",
+              "ground"
+            ]
+          },
+          "ref_id": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "harness_id",
+          "kind",
+          "ref_id"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "segments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "harness_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "node_a": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "node_b": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "length": {
+            "type": "object",
+            "properties": {
+              "nominal_mm": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "tol_mm": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "datum": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "nominal_mm",
+              "tol_mm",
+              "datum"
+            ],
+            "additionalProperties": false
+          }
+        },
+        "required": [
+          "id",
+          "harness_id",
+          "node_a",
+          "node_b",
+          "length"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "matings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "connector_a": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "connector_b": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "cavity_map": {
+            "minItems": 1,
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "cavity_a": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                },
+                "cavity_b": {
+                  "type": "string",
+                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                }
+              },
+              "required": [
+                "cavity_a",
+                "cavity_b"
+              ],
+              "additionalProperties": false
+            }
+          }
+        },
+        "required": [
+          "id",
+          "connector_a",
+          "connector_b",
+          "cavity_map"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "assets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[0-9a-f]{64}$"
+          },
+          "media_type": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "blob_ref": {
+            "type": "string",
+            "maxLength": 500,
+            "pattern": "^((asset|synthetic):\\/\\/[^\\s?#]+|[^\\s/~:?#][^\\s:?#]*)$"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "sha256",
+          "media_type",
+          "blob_ref",
+          "title"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "entity_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "origin": {
+            "type": "string",
+            "enum": [
+              "measured",
+              "documented",
+              "inferred",
+              "assumed"
+            ]
+          },
+          "value_json": {
+            "type": "string"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "asset_id": {
+                    "type": "string",
+                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  },
+                  "page_index": {
+                    "type": "integer",
+                    "minimum": 0,
+                    "maximum": 9007199254740991
+                  },
+                  "bbox": {
+                    "anyOf": [
+                      {
+                        "type": "array",
+                        "prefixItems": [
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          },
+                          {
+                            "type": "number"
+                          }
+                        ],
+                        "items": false,
+                        "minItems": 4,
+                        "maxItems": 4
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "asset_id",
+                  "page_index",
+                  "bbox"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "note": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 500
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "id",
+          "entity_id",
+          "field",
+          "origin",
+          "value_json",
+          "source",
+          "note"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "entity_id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "field": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 64
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ]
+          },
+          "reviewed_value_json": {
+            "type": "string"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          }
+        },
+        "required": [
+          "id",
+          "entity_id",
+          "field",
+          "status",
+          "reviewed_value_json",
+          "revision"
+        ],
+        "additionalProperties": false
+      }
+    },
+    "view_positions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+          },
+          "x": {
+            "type": "number"
+          },
+          "y": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "id",
+          "x",
+          "y"
+        ],
+        "additionalProperties": false
+      }
+    }
+  },
+  "required": [
+    "format",
+    "schema_version",
+    "document_id",
+    "revision",
+    "applied_batch_ids",
+    "project",
+    "harnesses",
+    "parts",
+    "connectors",
+    "contacts",
+    "splices",
+    "ground_points",
+    "wires",
+    "nodes",
+    "segments",
+    "matings",
+    "assets",
+    "evidence",
+    "reviews",
+    "view_positions"
+  ],
+  "additionalProperties": false
+}
