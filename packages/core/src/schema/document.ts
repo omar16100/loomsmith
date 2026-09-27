@@ -104,8 +104,9 @@ export const asset_schema = z.strictObject({
   id: id_schema,
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
   media_type: z.string().min(1).max(100),
-  // Portable locator only: asset:// or synthetic:// URI, or a relative path. No absolute paths, no signed or expiring URLs.
-  blob_ref: z.string().max(500).regex(/^((asset|synthetic):\/\/[^\s?#]+|[^\s/~:?#][^\s:?#]*)$/),
+  // Portable locator only: asset:// or synthetic:// URI, or a relative path. No absolute paths (POSIX or
+  // Windows/UNC), no signed or expiring URLs.
+  blob_ref: z.string().max(500).regex(/^((asset|synthetic):\/\/[^\s?#]+|[^\s/\\~:?#][^\s:?#]*)$/),
   title: text_schema,
 });
 

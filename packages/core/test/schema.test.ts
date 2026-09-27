@@ -44,6 +44,8 @@ describe("document schema", () => {
     expect(document_schema.safeParse(with_asset("pdfs/ewd_102.pdf")).success).toBe(true);
     expect(document_schema.safeParse(with_asset("/Users/me/ewd.pdf")).success).toBe(false);
     expect(document_schema.safeParse(with_asset("https://bucket.example/ewd.pdf?X-Amz-Expires=300")).success).toBe(false);
+    // A Windows UNC network path is also an absolute, non-portable locator.
+    expect(document_schema.safeParse(with_asset("\\\\server\\share\\ewd.pdf")).success).toBe(false);
   });
 
   it("accepts a schematic-only wire with unknown spec and no route", () => {

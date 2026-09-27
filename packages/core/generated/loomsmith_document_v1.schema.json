@@ -1030,7 +1030,7 @@
           "blob_ref": {
             "type": "string",
             "maxLength": 500,
-            "pattern": "^((asset|synthetic):\\/\\/[^\\s?#]+|[^\\s/~:?#][^\\s:?#]*)$"
+            "pattern": "^((asset|synthetic):\\/\\/[^\\s?#]+|[^\\s/\\\\~:?#][^\\s:?#]*)$"
           },
           "title": {
             "anyOf": [
