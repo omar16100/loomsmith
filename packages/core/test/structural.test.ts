@@ -126,4 +126,17 @@ describe("validate_structure", () => {
     const bad = { ...doc, splices: [{ ...splice("sp1", "h1", "SP1"), max_wire_ends: 2 }], wires: [...doc.wires, ends(1), ends(2), ends(3)] };
     expect(find(bad, "S_SPLICE_OVERFILLED").map((issue) => issue.entity_id)).toEqual(["sp1"]);
   });
+
+  it("flags wire routes through missing or foreign segments", () => {
+    const doc = small_doc();
+    const bad = {
+      ...doc,
+      harnesses: [...doc.harnesses, harness("h2", "SECOND")],
+      nodes: [...doc.nodes, node("n_h2a", "h2", "breakout", null), node("n_h2b", "h2", "breakout", null)],
+      segments: [...doc.segments, segment("s_h2", "h2", "n_h2a", "n_h2b", 10)],
+      wires: [...doc.wires, wire("w4", "h1", "W4", [open_end, open_end], spec(0.5, "R"), ["s_missing", "s_h2"])],
+    };
+    expect(find(bad, "S_REF_MISSING")).toContainEqual(expect.objectContaining({ path: "wires/w4/route/0" }));
+    expect(find(bad, "S_HARNESS_MISMATCH")).toContainEqual(expect.objectContaining({ path: "wires/w4/route/1" }));
+  });
 });
