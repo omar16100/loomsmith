@@ -3,3 +3,7 @@ export * from "./schema/primitives.ts";
 export * from "./schema/document.ts";
 export * from "./schema/commands.ts";
 export * from "./schema/json_schema.ts";
+export * from "./schema/format_issues.ts";
+export * from "./model/canonical.ts";
+export * from "./model/empty_document.ts";
+export * from "./migrate/load_document.ts";
