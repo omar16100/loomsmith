@@ -12,7 +12,7 @@
     },
     "document_id": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+      "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
     },
     "revision": {
       "type": "integer",
@@ -23,7 +23,7 @@
       "type": "array",
       "items": {
         "type": "string",
-        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+        "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
       }
     },
     "project": {
@@ -48,7 +48,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "label": {
             "type": "string",
@@ -71,7 +71,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "kind": {
             "type": "string",
@@ -139,11 +139,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "harness_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "label": {
             "type": "string",
@@ -199,7 +199,7 @@
                 "anyOf": [
                   {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                    "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                   },
                   {
                     "type": "null"
@@ -249,7 +249,7 @@
               "properties": {
                 "id": {
                   "type": "string",
-                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                 },
                 "label": {
                   "type": "string",
@@ -286,15 +286,15 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "connector_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "cavity_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "contact_gender": {
             "anyOf": [
@@ -317,7 +317,7 @@
                 "anyOf": [
                   {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                    "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                   },
                   {
                     "type": "null"
@@ -370,7 +370,7 @@
                         "anyOf": [
                           {
                             "type": "string",
-                            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                           },
                           {
                             "type": "null"
@@ -453,11 +453,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "harness_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "label": {
             "type": "string",
@@ -472,7 +472,7 @@
                 "anyOf": [
                   {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                    "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                   },
                   {
                     "type": "null"
@@ -536,11 +536,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "harness_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "label": {
             "type": "string",
@@ -564,11 +564,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "harness_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "label": {
             "type": "string",
@@ -590,7 +590,7 @@
                       },
                       "contact_id": {
                         "type": "string",
-                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                        "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                       }
                     },
                     "required": [
@@ -608,7 +608,7 @@
                       },
                       "splice_id": {
                         "type": "string",
-                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                        "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                       }
                     },
                     "required": [
@@ -626,7 +626,7 @@
                       },
                       "ground_point_id": {
                         "type": "string",
-                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                        "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                       }
                     },
                     "required": [
@@ -661,7 +661,7 @@
                       },
                       "contact_id": {
                         "type": "string",
-                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                        "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                       }
                     },
                     "required": [
@@ -679,7 +679,7 @@
                       },
                       "splice_id": {
                         "type": "string",
-                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                        "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                       }
                     },
                     "required": [
@@ -697,7 +697,7 @@
                       },
                       "ground_point_id": {
                         "type": "string",
-                        "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                        "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                       }
                     },
                     "required": [
@@ -801,7 +801,7 @@
                 "type": "array",
                 "items": {
                   "type": "string",
-                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                 }
               },
               {
@@ -852,11 +852,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "harness_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "kind": {
             "type": "string",
@@ -873,7 +873,7 @@
             "anyOf": [
               {
                 "type": "string",
-                "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
               },
               {
                 "type": "null"
@@ -897,19 +897,19 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "harness_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "node_a": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "node_b": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "length": {
             "type": "object",
@@ -974,15 +974,15 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "connector_a": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "connector_b": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "cavity_map": {
             "minItems": 1,
@@ -992,11 +992,11 @@
               "properties": {
                 "cavity_a": {
                   "type": "string",
-                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                 },
                 "cavity_b": {
                   "type": "string",
-                  "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                  "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                 }
               },
               "required": [
@@ -1023,7 +1023,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "sha256": {
             "type": "string",
@@ -1037,7 +1037,7 @@
           "blob_ref": {
             "type": "string",
             "maxLength": 500,
-            "pattern": "^((asset|synthetic):\\/\\/[^\\s?#]+|[^\\s/\\\\~:?#][^\\s:?#]*)$"
+            "pattern": "^(?!(?:.*[/\\\\])?\\.\\.(?:[/\\\\]|$))((asset|synthetic):\\/\\/[^\\s?#]+|[^\\s/\\\\~:?#][^\\s:?#]*)$"
           },
           "title": {
             "anyOf": [
@@ -1069,11 +1069,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "entity_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "field": {
             "type": "string",
@@ -1099,7 +1099,7 @@
                 "properties": {
                   "asset_id": {
                     "type": "string",
-                    "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                    "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
                   },
                   "page_index": {
                     "type": "integer",
@@ -1178,11 +1178,11 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "entity_id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "field": {
             "type": "string",
@@ -1223,7 +1223,7 @@
         "properties": {
           "id": {
             "type": "string",
-            "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+            "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
           },
           "x": {
             "type": "number"

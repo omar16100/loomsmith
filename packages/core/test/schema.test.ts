@@ -48,6 +48,28 @@ describe("document schema", () => {
     expect(document_schema.safeParse(with_asset("\\\\server\\share\\ewd.pdf")).success).toBe(false);
   });
 
+  it("rejects any '..' path segment in an asset locator", () => {
+    const with_asset = (blob_ref: string) => ({
+      ...minimal,
+      assets: [{ id: "a1", sha256: "0".repeat(64), media_type: "application/pdf", blob_ref, title: null }],
+    });
+    for (const traversal of ["../x.pdf", "pdfs/../../etc/passwd", "asset://a/../b", "synthetic://../x.pdf", "pdfs/..", "pdfs\\..\\x.pdf"]) {
+      expect(document_schema.safeParse(with_asset(traversal)).success, traversal).toBe(false);
+    }
+    for (const fine of ["pdfs/..hidden/x.pdf", "pdfs/a..b.pdf", "asset://a/b..c"]) {
+      expect(document_schema.safeParse(with_asset(fine)).success, fine).toBe(true);
+    }
+  });
+
+  it("rejects the ids '.' and '..'", () => {
+    for (const id of [".", ".."]) {
+      expect(document_schema.safeParse({ ...minimal, harnesses: [{ id, label: "X" }] }).success, id).toBe(false);
+    }
+    for (const id of ["a.b", ".h1", "..."]) {
+      expect(document_schema.safeParse({ ...minimal, harnesses: [{ id, label: "X" }] }).success, id).toBe(true);
+    }
+  });
+
   it("rejects ':' in labels so a CONNECTOR:CAVITY probe label can never equal another label", () => {
     expect(document_schema.safeParse({ ...minimal, harnesses: [{ id: "h1", label: "J1:3" }] }).success).toBe(false);
     expect(wire_schema.safeParse({ ...schematic_wire, label: "W:1" }).success).toBe(false);

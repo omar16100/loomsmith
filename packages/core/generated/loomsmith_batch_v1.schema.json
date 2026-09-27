@@ -4,11 +4,11 @@
   "properties": {
     "batch_id": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+      "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
     },
     "document_id": {
       "type": "string",
-      "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+      "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
     },
     "command_schema_version": {
       "type": "number",
@@ -99,7 +99,7 @@
               },
               "id": {
                 "type": "string",
-                "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
               },
               "set": {
                 "type": "object",
@@ -152,7 +152,7 @@
               },
               "id": {
                 "type": "string",
-                "pattern": "^[A-Za-z0-9_.-]{1,128}$"
+                "pattern": "^(?!\\.\\.?$)[A-Za-z0-9_.-]{1,128}$"
               },
               "expect_entity": {
                 "type": "object",

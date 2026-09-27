@@ -105,8 +105,9 @@ export const asset_schema = z.strictObject({
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
   media_type: z.string().min(1).max(100),
   // Portable locator only: asset:// or synthetic:// URI, or a relative path. No absolute paths (POSIX or
-  // Windows/UNC), no signed or expiring URLs.
-  blob_ref: z.string().max(500).regex(/^((asset|synthetic):\/\/[^\s?#]+|[^\s/\\~:?#][^\s:?#]*)$/),
+  // Windows/UNC), no signed or expiring URLs, and no ".." path segment (after "/" or "\", or at the start), so a
+  // locator can never climb out of the asset store.
+  blob_ref: z.string().max(500).regex(/^(?!(?:.*[/\\])?\.\.(?:[/\\]|$))((asset|synthetic):\/\/[^\s?#]+|[^\s/\\~:?#][^\s:?#]*)$/),
   title: text_schema,
 });
 

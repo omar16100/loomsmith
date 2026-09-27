@@ -1,7 +1,8 @@
 import * as z from "zod";
 
-// Restricted alphabet so composite keys ("contact:<id>", "<connector>/<cavity>") can never collide.
-export const id_schema = z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/);
+// Restricted alphabet so composite keys ("contact:<id>", "<connector>/<cavity>") can never collide. "." and ".."
+// are refused so an id used as a file or path name can never mean "this directory" or "the parent directory".
+export const id_schema = z.string().regex(/^(?!\.\.?$)[A-Za-z0-9_.-]{1,128}$/);
 // No ":" in labels: a bench probe label is "<connector label>:<cavity label>", so it can never equal a
 // ground point label or another probe label.
 export const label_schema = z.string().min(1).max(64).regex(/^[^:]*$/);
