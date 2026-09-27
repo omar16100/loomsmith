@@ -5,7 +5,7 @@
 - [x] Repo /Users/macmini/projects/loomsmith, git init, branch feat/m0_m1_core
 - [x] LICENSE Apache-2.0 (canonical text, sha256 cfc7749b...)
 - [x] docs/27092026_loomsmith_design.md, docs/c4model.md, docs/index.md, THIRD_PARTY_NOTICES.md
-- [x] docs/27092026_loomsmith_plan.md (implementation plan, codex review pending)
+- [x] docs/27092026_loomsmith_plan.md (implementation plan, codex reviewed + findings applied)
 - [ ] Workspace scaffold (pnpm, tsconfig, vitest, CI)
 - [ ] parsnip entity
 

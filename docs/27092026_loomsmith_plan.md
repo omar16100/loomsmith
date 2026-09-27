@@ -301,8 +301,9 @@ git add -A && git commit -m "chore: scaffold pnpm workspace, core package and lo
 
 **Interfaces:**
 - Produces (primitives): `id_schema`, `label_schema`, `text_schema`, `part_use_schema`, `length_schema`, `origin_schema`, `bbox_schema`; types `PartUse`, `Length`, `Origin`.
-- Produces (document): entity schemas `harness_schema, part_schema, cavity_schema, connector_schema, contact_schema, splice_schema, ground_point_schema, wire_end_schema, wire_spec_schema, wire_schema, node_schema, segment_schema, mating_schema, asset_schema, evidence_schema, review_schema, view_position_schema`; `collection_names` (readonly tuple), `CollectionName`, `collection_schemas`, `document_schema`, `current_schema_version` (= 1); types `LoomDocument, Harness, Part, PartKind, Cavity, Connector, Contact, Splice, GroundPoint, WireEnd, WireSpec, Wire, TopologyNode, Segment, Mating, Asset, Evidence, Review, ViewPosition`.
-- Produces (commands): `command_schema_version` (= 1), `command_schema`, `batch_schema`; types `Command, InsertCommand, UpdateCommand, DeleteCommand, Batch`.
+- Produces (document): entity schemas `harness_schema, part_schema, cavity_schema, connector_schema, contact_schema, splice_schema, ground_point_schema, wire_end_schema, wire_spec_schema, wire_schema, node_schema, segment_schema, mating_schema, asset_schema, evidence_schema, review_schema, view_position_schema, project_schema`; `collection_names` (readonly tuple), `CollectionName`, `collection_schemas`, `document_schema`, `current_schema_version` (= 1); types `LoomDocument, Project, Harness, Part, PartKind, Cavity, Connector, Contact, Splice, GroundPoint, WireEnd, WireSpec, Wire, TopologyNode, Segment, Mating, Asset, Evidence, Review, ViewPosition`.
+- Field facts later tasks rely on: ids match `^[A-Za-z0-9_.-]{1,128}$`; `contact.contact_gender`; `contact.seal` is `{ part: PartUse, quantity } | null`; `splice.max_wire_ends` (2 to 32); `evidence.value_json` (canonical json of the field value the evidence describes); `asset.blob_ref` is an `asset://` / `synthetic://` URI or a relative path.
+- Produces (commands): `command_schema_version` (= 1), `command_schema`, `batch_schema`; types `Command, InsertCommand, UpdateCommand, DeleteCommand, UpdateProjectCommand, Batch`. `update_project` edits the project singleton (`{ op: "update_project", set, expect? }`).
 - Produces (json): `document_json_schema(): Record<string, unknown>`, `batch_json_schema(): Record<string, unknown>`.
 
 - [ ] **Step 1: Write the failing test**
@@ -343,6 +344,18 @@ describe("document schema", () => {
 
   it("rejects unknown fields", () => {
     expect(document_schema.safeParse({ ...minimal, extra: 1 }).success).toBe(false);
+  });
+
+  it("restricts the id alphabet and asset locators", () => {
+    expect(document_schema.safeParse({ ...minimal, harnesses: [{ id: "a/b", label: "X" }] }).success).toBe(false);
+    const with_asset = (blob_ref: string) => ({
+      ...minimal,
+      assets: [{ id: "a1", sha256: "0".repeat(64), media_type: "application/pdf", blob_ref, title: null }],
+    });
+    expect(document_schema.safeParse(with_asset("synthetic://fixture/diagram.pdf")).success).toBe(true);
+    expect(document_schema.safeParse(with_asset("pdfs/ewd_102.pdf")).success).toBe(true);
+    expect(document_schema.safeParse(with_asset("/Users/me/ewd.pdf")).success).toBe(false);
+    expect(document_schema.safeParse(with_asset("https://bucket.example/ewd.pdf?X-Amz-Expires=300")).success).toBe(false);
   });
 
   it("accepts a schematic-only wire with unknown spec and no route", () => {
@@ -391,7 +404,8 @@ Expected: FAIL, cannot resolve `../src/schema/json_schema.ts`.
 ```ts
 import * as z from "zod";
 
-export const id_schema = z.string().min(1).max(128);
+// Restricted alphabet so composite keys ("contact:<id>", "<connector>/<cavity>") can never collide.
+export const id_schema = z.string().regex(/^[A-Za-z0-9_.-]{1,128}$/);
 export const label_schema = z.string().min(1).max(64);
 export const text_schema = z.string().min(1).max(500).nullable();
 
@@ -453,8 +467,9 @@ export const contact_schema = z.strictObject({
   id: id_schema,
   connector_id: id_schema,
   cavity_id: id_schema,
+  contact_gender: z.enum(["male", "female"]).nullable(),
   terminal: part_use_schema,
-  seal: part_use_schema.nullable(),
+  seal: z.strictObject({ part: part_use_schema, quantity: z.number().int().min(1).max(4) }).nullable(),
   max_wire_ends: z.number().int().min(1).max(4),
 });
 
@@ -463,6 +478,7 @@ export const splice_schema = z.strictObject({
   harness_id: id_schema,
   label: label_schema,
   part: part_use_schema,
+  max_wire_ends: z.number().int().min(2).max(32),
 });
 
 export const ground_point_schema = z.strictObject({ id: id_schema, harness_id: id_schema, label: label_schema });
@@ -524,7 +540,8 @@ export const asset_schema = z.strictObject({
   id: id_schema,
   sha256: z.string().regex(/^[0-9a-f]{64}$/),
   media_type: z.string().min(1).max(100),
-  blob_ref: z.string().min(1).max(500),
+  // Portable locator only: asset:// or synthetic:// URI, or a relative path. No absolute paths, no signed or expiring URLs.
+  blob_ref: z.string().max(500).regex(/^((asset|synthetic):\/\/[^\s?#]+|[^\s/~:?#][^\s:?#]*)$/),
   title: text_schema,
 });
 
@@ -533,6 +550,7 @@ export const evidence_schema = z.strictObject({
   entity_id: id_schema,
   field: z.string().min(1).max(64),
   origin: origin_schema,
+  value_json: z.string(),
   source: z
     .strictObject({ asset_id: id_schema, page_index: z.number().int().nonnegative(), bbox: bbox_schema.nullable() })
     .nullable(),
@@ -549,6 +567,8 @@ export const review_schema = z.strictObject({
 });
 
 export const view_position_schema = z.strictObject({ id: id_schema, x: z.number(), y: z.number() });
+
+export const project_schema = z.strictObject({ label: label_schema });
 
 export const collection_names = [
   "harnesses", "parts", "connectors", "contacts", "splices", "ground_points", "wires",
@@ -579,7 +599,7 @@ export const document_schema = z.strictObject({
   document_id: id_schema,
   revision: z.number().int().nonnegative(),
   applied_batch_ids: z.array(id_schema),
-  project: z.strictObject({ label: label_schema }),
+  project: project_schema,
   harnesses: z.array(harness_schema),
   parts: z.array(part_schema),
   connectors: z.array(connector_schema),
@@ -597,6 +617,7 @@ export const document_schema = z.strictObject({
 });
 
 export type LoomDocument = z.infer<typeof document_schema>;
+export type Project = z.infer<typeof project_schema>;
 export type Harness = z.infer<typeof harness_schema>;
 export type PartKind = z.infer<typeof part_kind_schema>;
 export type Part = z.infer<typeof part_schema>;
@@ -649,10 +670,17 @@ export const delete_command_schema = z.strictObject({
   expect_entity: record_schema.optional(),
 });
 
+export const update_project_command_schema = z.strictObject({
+  op: z.literal("update_project"),
+  set: record_schema,
+  expect: record_schema.optional(),
+});
+
 export const command_schema = z.discriminatedUnion("op", [
   insert_command_schema,
   update_command_schema,
   delete_command_schema,
+  update_project_command_schema,
 ]);
 
 export const batch_schema = z.strictObject({
@@ -667,6 +695,7 @@ export const batch_schema = z.strictObject({
 export type InsertCommand = z.infer<typeof insert_command_schema>;
 export type UpdateCommand = z.infer<typeof update_command_schema>;
 export type DeleteCommand = z.infer<typeof delete_command_schema>;
+export type UpdateProjectCommand = z.infer<typeof update_project_command_schema>;
 export type Command = z.infer<typeof command_schema>;
 export type Batch = z.infer<typeof batch_schema>;
 ```
@@ -765,14 +794,15 @@ export function contact(
     id: `${connector_id}_k${cavity_label}`,
     connector_id,
     cavity_id: `${connector_id}_c${cavity_label}`,
+    contact_gender: null,
     terminal: options.terminal ?? unknown_part,
-    seal: options.seal ?? null,
+    seal: options.seal ? { part: options.seal, quantity: 1 } : null,
     max_wire_ends: options.max_wire_ends ?? 1,
   };
 }
 
 export function splice(id: string, harness_id: string, label: string, part_use: PartUse = unknown_part): Splice {
-  return { id, harness_id, label, part: part_use };
+  return { id, harness_id, label, part: part_use, max_wire_ends: 4 };
 }
 
 export function ground(id: string, harness_id: string, label: string): GroundPoint {
@@ -1038,9 +1068,9 @@ git add -A && git commit -m "feat(core): canonical json, empty document and vers
 
 **Interfaces:**
 - Consumes: Task 2 types; `compare_ids` (Task 3).
-- Produces: `DocIndex` (maps `by_id, harnesses, parts, connectors, contacts, splices, ground_points, wires, nodes, segments, matings, assets, contacts_by_cavity, wire_ends_by_endpoint, nodes_by_ref`, plus `duplicate_ids: string[]`), `EntityRef`, `WireEndRef`, `build_index(doc): DocIndex`, `cavity_key(connector_id, cavity_id): string`, `endpoint_key(end: WireEnd): string | null` (`"contact:<id>" | "splice:<id>" | "ground_point:<id>"`), `push_to(map, key, value)`.
-- Produces: `Issue { code; level: "structural" | "completeness"; severity: "error" | "warning"; message; path; entity_id: string | null; hint }`, `issue_key(issue)`, `sort_issues(issues)`, `entity_path(collection, id, ...rest)` (format `collection/id/field/index`), `validate_structure(doc, index?): Issue[]`.
-- Structural codes: `S_DUPLICATE_ID, S_REF_MISSING, S_PART_KIND, S_DUPLICATE_CAVITY, S_DUPLICATE_LABEL, S_CAVITY_MULTIPLE_CONTACTS, S_CONTACT_OVERFILLED, S_HARNESS_MISMATCH, S_NODE_KIND, S_NODE_DUPLICATE_REF, S_SEGMENT_LOOP, S_MATING_INVALID`.
+- Produces: `DocIndex` (maps `by_id, harnesses, parts, connectors, contacts, splices, ground_points, wires, nodes, segments, matings, assets, contacts_by_cavity, wire_ends_by_endpoint, nodes_by_ref`, plus `duplicate_ids: string[]`), `EntityRef`, `WireEndRef`, `build_index(doc): DocIndex`, `cavity_key(connector_id, cavity_id): string`, `endpoint_key(end: WireEnd): string | null` (`"contact:<id>" | "splice:<id>" | "ground_point:<id>"`), `push_to(map, key, value)`, `has_field(index, entity_id, field): boolean` (top-level field other than `id`).
+- Produces: `Issue { code; level: "structural" | "completeness"; severity: "error" | "warning"; message; path; entity_id: string | null; hint }`, `issue_key(issue)`, `issue_fingerprint(issue)`, `sort_issues(issues)`, `entity_path(collection, id, ...rest)` (format `collection/id/field/index`), `validate_structure(doc, index?): Issue[]`.
+- Structural codes: `S_DUPLICATE_ID, S_REF_MISSING, S_PART_KIND, S_PART_IDENTITY, S_DUPLICATE_CAVITY, S_DUPLICATE_LABEL, S_CAVITY_MULTIPLE_CONTACTS, S_CONTACT_OVERFILLED, S_SPLICE_OVERFILLED, S_HARNESS_MISMATCH, S_NODE_KIND, S_NODE_DUPLICATE_REF, S_SEGMENT_LOOP, S_MATING_INVALID, S_FIELD_UNKNOWN`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -1050,7 +1080,7 @@ import { describe, expect, it } from "vitest";
 import type { LoomDocument } from "../src/schema/document.ts";
 import { validate_structure } from "../src/validate/structural.ts";
 import {
-  connector, contact, ground, harness, identified, node, open_end, part, segment, small_doc, spec, splice, to_contact, wire,
+  connector, contact, ground, harness, identified, node, open_end, part, segment, small_doc, spec, splice, to_contact, to_splice, wire,
 } from "./helpers/entities.ts";
 
 const find = (doc: LoomDocument, code: string) => validate_structure(doc).filter((issue) => issue.code === code);
@@ -1140,9 +1170,39 @@ describe("validate_structure", () => {
     const doc = small_doc();
     const bad = {
       ...doc,
-      evidence: [{ id: "e1", entity_id: "w1", field: "spec", origin: "documented" as const, source: { asset_id: "a_missing", page_index: 0, bbox: null }, note: null }],
+      evidence: [{
+        id: "e1", entity_id: "w1", field: "spec", origin: "documented" as const, value_json: "{}",
+        source: { asset_id: "a_missing", page_index: 0, bbox: null }, note: null,
+      }],
     };
     expect(find(bad, "S_REF_MISSING")).toContainEqual(expect.objectContaining({ path: "evidence/e1/source/asset_id" }));
+  });
+
+  it("flags an identified part use without a part id", () => {
+    const doc = small_doc();
+    const bad = {
+      ...doc,
+      connectors: doc.connectors.map((c) => (c.id === "j1" ? { ...c, housing: { ...c.housing, identification: "identified" as const } } : c)),
+    };
+    expect(find(bad, "S_PART_IDENTITY")).toContainEqual(expect.objectContaining({ path: "connectors/j1/housing/part_id" }));
+  });
+
+  it("flags repeated view positions and reviews of unknown fields", () => {
+    const doc = small_doc();
+    const bad = {
+      ...doc,
+      view_positions: [{ id: "n_j1", x: 0, y: 0 }, { id: "n_j1", x: 5, y: 5 }],
+      reviews: [{ id: "r1", entity_id: "w1", field: "spec.cross_section_mm2", status: "approved" as const, reviewed_value_json: "0.5", revision: 0 }],
+    };
+    expect(find(bad, "S_DUPLICATE_ID")).toContainEqual(expect.objectContaining({ path: "view_positions/n_j1" }));
+    expect(find(bad, "S_FIELD_UNKNOWN")).toContainEqual(expect.objectContaining({ path: "reviews/r1/field" }));
+  });
+
+  it("flags a splice holding more wire ends than its capacity", () => {
+    const doc = small_doc();
+    const ends = (i: number) => wire(`ws${i}`, "h1", `WS${i}`, [to_splice("sp1"), open_end], spec(0.5, "R"), null);
+    const bad = { ...doc, splices: [{ ...splice("sp1", "h1", "SP1"), max_wire_ends: 2 }], wires: [...doc.wires, ends(1), ends(2), ends(3)] };
+    expect(find(bad, "S_SPLICE_OVERFILLED").map((issue) => issue.entity_id)).toEqual(["sp1"]);
   });
 });
 ```
@@ -1214,6 +1274,12 @@ export function push_to<K, V>(map: Map<K, V[]>, key: K, value: V): void {
   else map.set(key, [value]);
 }
 
+// Evidence and reviews address top-level fields only ("spec", "length", "ends"); "id" is not reviewable.
+export function has_field(index: DocIndex, entity_id: string, field: string): boolean {
+  const ref = index.by_id.get(entity_id);
+  return ref !== undefined && field !== "id" && Object.hasOwn(ref.entity, field);
+}
+
 function by_id_map<T extends { id: string }>(items: readonly T[]): Map<string, T> {
   return new Map(items.map((item) => [item.id, item]));
 }
@@ -1281,6 +1347,11 @@ export function issue_key(issue: Issue): string {
   return `${issue.code}|${issue.entity_id ?? ""}|${issue.path}`;
 }
 
+// Key plus message: detects an existing issue getting worse (e.g. "holds 2 wire ends" becoming "holds 3").
+export function issue_fingerprint(issue: Issue): string {
+  return `${issue_key(issue)}|${issue.message}`;
+}
+
 export function sort_issues(issues: readonly Issue[]): Issue[] {
   return [...issues].sort((a, b) => compare_strings(issue_key(a), issue_key(b)));
 }
@@ -1296,7 +1367,7 @@ export function entity_path(collection: string, id: string, ...rest: Array<strin
 `packages/core/src/validate/structural.ts`:
 ```ts
 import { compare_ids } from "../model/canonical.ts";
-import { build_index, push_to, type DocIndex } from "../model/doc_index.ts";
+import { build_index, has_field, push_to, type DocIndex } from "../model/doc_index.ts";
 import type { LoomDocument, PartKind, WireEnd } from "../schema/document.ts";
 import type { PartUse } from "../schema/primitives.ts";
 import { entity_path, sort_issues, type Issue } from "./issue.ts";
@@ -1335,11 +1406,16 @@ function check_part_uses(doc: LoomDocument, index: DocIndex, emit: Emit): void {
   for (const c of doc.connectors) uses.push({ path: entity_path("connectors", c.id, "housing"), entity_id: c.id, use: c.housing, kind: "housing" });
   for (const k of doc.contacts) {
     uses.push({ path: entity_path("contacts", k.id, "terminal"), entity_id: k.id, use: k.terminal, kind: "terminal" });
-    if (k.seal !== null) uses.push({ path: entity_path("contacts", k.id, "seal"), entity_id: k.id, use: k.seal, kind: "seal" });
+    if (k.seal !== null) uses.push({ path: entity_path("contacts", k.id, "seal", "part"), entity_id: k.id, use: k.seal.part, kind: "seal" });
   }
   for (const s of doc.splices) uses.push({ path: entity_path("splices", s.id, "part"), entity_id: s.id, use: s.part, kind: "splice" });
   for (const u of uses) {
-    if (u.use.part_id === null) continue;
+    if (u.use.part_id === null) {
+      if (u.use.identification !== "unknown") {
+        emit("S_PART_IDENTITY", `${u.kind} is ${u.use.identification} but has no part_id`, `${u.path}/part_id`, u.entity_id, "set part_id, or mark identification unknown");
+      }
+      continue;
+    }
     const found = index.parts.get(u.use.part_id);
     if (!found) emit("S_REF_MISSING", `part ${u.use.part_id} not found`, `${u.path}/part_id`, u.entity_id, "add the part or clear part_id");
     else if (found.kind !== u.kind) {
@@ -1379,6 +1455,12 @@ function check_connectors_and_contacts(doc: LoomDocument, index: DocIndex, emit:
     const count = index.wire_ends_by_endpoint.get(`contact:${k.id}`)?.length ?? 0;
     if (count > k.max_wire_ends) {
       emit("S_CONTACT_OVERFILLED", `contact holds ${count} wire ends, max ${k.max_wire_ends}`, entity_path("contacts", k.id, "max_wire_ends"), k.id, "raise max_wire_ends only if the terminal is rated for it");
+    }
+  }
+  for (const s of doc.splices) {
+    const count = index.wire_ends_by_endpoint.get(`splice:${s.id}`)?.length ?? 0;
+    if (count > s.max_wire_ends) {
+      emit("S_SPLICE_OVERFILLED", `splice holds ${count} wire ends, max ${s.max_wire_ends}`, entity_path("splices", s.id, "max_wire_ends"), s.id, "use a larger splice or split the joint");
     }
   }
 }
@@ -1497,15 +1579,20 @@ function check_matings(doc: LoomDocument, index: DocIndex, emit: Emit): void {
 function check_evidence(doc: LoomDocument, index: DocIndex, emit: Emit): void {
   for (const e of doc.evidence) {
     if (!index.by_id.has(e.entity_id)) emit("S_REF_MISSING", `entity ${e.entity_id} not found`, entity_path("evidence", e.id, "entity_id"), e.id, "attach evidence to an existing entity");
+    else if (!has_field(index, e.entity_id, e.field)) emit("S_FIELD_UNKNOWN", `${e.entity_id} has no field ${e.field}`, entity_path("evidence", e.id, "field"), e.id, "use a top-level field name of the entity");
     if (e.source !== null && !index.assets.has(e.source.asset_id)) {
       emit("S_REF_MISSING", `asset ${e.source.asset_id} not found`, entity_path("evidence", e.id, "source", "asset_id"), e.id, "add the asset to the manifest first");
     }
   }
   for (const r of doc.reviews) {
     if (!index.by_id.has(r.entity_id)) emit("S_REF_MISSING", `entity ${r.entity_id} not found`, entity_path("reviews", r.id, "entity_id"), r.id, "review an existing entity");
+    else if (!has_field(index, r.entity_id, r.field)) emit("S_FIELD_UNKNOWN", `${r.entity_id} has no field ${r.field}`, entity_path("reviews", r.id, "field"), r.id, "use a top-level field name of the entity");
   }
+  const positions = new Set<string>();
   for (const p of doc.view_positions) {
     if (!index.by_id.has(p.id)) emit("S_REF_MISSING", `entity ${p.id} not found`, entity_path("view_positions", p.id), p.id, "remove the position of a deleted entity");
+    if (positions.has(p.id)) emit("S_DUPLICATE_ID", `view position ${p.id} is repeated`, entity_path("view_positions", p.id), p.id, "keep one position per entity");
+    positions.add(p.id);
   }
 }
 
@@ -1562,9 +1649,9 @@ git add -A && git commit -m "feat(core): document index and structural validatio
 
 **Interfaces:**
 - Consumes: `batch_schema`, `command_schema_version`, `collection_schemas`, `canonical_json`, `canonicalize_document`, `validate_structure`, `issue_key`, `Logger`.
-- Produces: `cmd_insert(collection, entity: { id: string } & Record<string, unknown>): Command`, `cmd_update(collection, id, set, expect?): Command`, `cmd_delete(collection, id): Command`; `apply_command(doc, command): CommandStep`; `apply_batch(doc, raw_batch: unknown, log?): ApplyBatchResult` with `ApplyBatchResult = { ok: true; duplicate: boolean; doc: LoomDocument; inverse: Command[] } | { ok: false; rejection: BatchRejection }` and `BatchRejection = { code: "invalid_batch" | "document_mismatch" | "stale_revision" | "precondition_failed" | "invalid_entity" | "structural_errors_introduced"; message: string; command_index: number | null; issues: Issue[] }`; `make_batch(doc, commands, batch_id, created_at): Batch`.
+- Produces: `cmd_insert(collection, entity: { id: string } & Record<string, unknown>): Command`, `cmd_update(collection, id, set, expect?): Command`, `cmd_delete(collection, id): Command`; `apply_command(doc, command): CommandStep`; `apply_batch(doc, raw_batch: unknown, log?): ApplyBatchResult` with `ApplyBatchResult = { ok: true; duplicate: boolean; doc: LoomDocument; inverse: Command[] } | { ok: false; rejection: BatchRejection }` and `BatchRejection = { code: "invalid_batch" | "document_mismatch" | "stale_revision" | "precondition_failed" | "invalid_entity" | "structural_errors_introduced" | "repair_required"; message: string; command_index: number | null; issues: Issue[] }`; `make_batch(doc, commands, batch_id, created_at): Batch`.
 - Produces (test helper): `apply_ok(doc, commands, batch_id): LoomDocument` (throws on rejection), `fixed_time = "2026-09-27T00:00:00Z"`.
-- Rules: deletes never cascade in M1; a delete that leaves references dangling is rejected as `structural_errors_introduced`.
+- Rules: deletes never cascade in M1; a delete that leaves references dangling is rejected as `structural_errors_introduced`. A structurally valid document must stay valid. An invalid document accepts only repair batches (no new or worsened issue by `issue_fingerprint`, strictly fewer issues), otherwise `repair_required`. `update_project` edits the project label with an inverse.
 
 - [ ] **Step 1: Write the test helper and failing tests**
 
@@ -1595,7 +1682,7 @@ import { create_memory_logger } from "../src/log.ts";
 import { to_canonical_file } from "../src/model/canonical.ts";
 import type { LoomDocument } from "../src/schema/document.ts";
 import { apply_ok, fixed_time as T } from "./helpers/apply.ts";
-import { harness, small_doc } from "./helpers/entities.ts";
+import { harness, open_end, small_doc, spec, to_contact, wire } from "./helpers/entities.ts";
 
 const rejection = (result: ApplyBatchResult) => (result.ok ? null : result.rejection);
 const content_of = (doc: LoomDocument) => to_canonical_file({ ...doc, revision: 0, applied_batch_ids: [] });
@@ -1679,6 +1766,26 @@ describe("apply_batch", () => {
     expect(rejection(apply_batch(doc, make_batch(doc, [cmd_update("wires", "w1", { id: "w9" })], "b1", T)))?.code).toBe("invalid_entity");
   });
 
+  it("accepts only repair batches on a structurally invalid document", () => {
+    const valid = small_doc();
+    const broken = { ...valid, wires: [...valid.wires, wire("w2", "h1", "W2", [to_contact("j1", "1"), to_contact("j2", "1")], spec(0.5, "R"), null)] };
+    const third_end = wire("w3", "h1", "W3", [to_contact("j1", "1"), open_end], spec(0.5, "R"), null);
+    const worsen = apply_batch(broken, make_batch(broken, [cmd_insert("wires", third_end)], "b1", T));
+    expect(rejection(worsen)?.code).toBe("structural_errors_introduced");
+    const unrelated = apply_batch(broken, make_batch(broken, [cmd_insert("harnesses", harness("h2", "SECOND"))], "b2", T));
+    expect(rejection(unrelated)?.code).toBe("repair_required");
+    const repair = apply_batch(broken, make_batch(broken, [cmd_delete("wires", "w2")], "b3", T));
+    expect(repair.ok).toBe(true);
+  });
+
+  it("updates the project label with an inverse", () => {
+    const doc = small_doc();
+    const result = apply_batch(doc, make_batch(doc, [{ op: "update_project", set: { label: "RENAMED" }, expect: { label: "SMALL" } }], "b1", T));
+    if (!result.ok) throw new Error(result.rejection.message);
+    expect(result.doc.project.label).toBe("RENAMED");
+    expect(result.inverse).toEqual([{ op: "update_project", set: { label: "SMALL" }, expect: { label: "RENAMED" } }]);
+  });
+
   it("undo restores the previous content", () => {
     const doc = small_doc();
     const forward = apply_batch(
@@ -1742,7 +1849,7 @@ export function cmd_delete(collection: CollectionName, id: string): Command {
 import type * as z from "zod";
 import { canonical_json } from "../model/canonical.ts";
 import type { Command } from "../schema/commands.ts";
-import { collection_schemas, type CollectionName, type LoomDocument } from "../schema/document.ts";
+import { collection_schemas, project_schema, type CollectionName, type LoomDocument } from "../schema/document.ts";
 
 export type AnyEntity = { id: string } & Record<string, unknown>;
 export type CommandFailureCode = "precondition_failed" | "invalid_entity";
@@ -1758,12 +1865,14 @@ function with_collection(doc: LoomDocument, name: CollectionName, items: AnyEnti
   return { ...doc, [name]: items } as unknown as LoomDocument;
 }
 
+function format_issues(issues: ReadonlyArray<{ readonly path: ReadonlyArray<PropertyKey>; readonly message: string }>): string {
+  return issues.map((issue) => `${issue.path.map(String).join(".") || "(root)"}: ${issue.message}`).join("; ");
+}
+
 function parse_entity(name: CollectionName, value: unknown): { ok: true; entity: AnyEntity } | { ok: false; message: string } {
   const schema: z.ZodType = collection_schemas[name];
   const result = schema.safeParse(value);
-  if (!result.success) {
-    return { ok: false, message: result.error.issues.map((issue) => `${issue.path.map(String).join(".") || "(root)"}: ${issue.message}`).join("; ") };
-  }
+  if (!result.success) return { ok: false, message: format_issues(result.error.issues) };
   return { ok: true, entity: result.data as AnyEntity };
 }
 
@@ -1771,9 +1880,35 @@ function fail(code: CommandFailureCode, message: string): CommandStep {
   return { ok: false, code, message };
 }
 
+function check_expect(current: Record<string, unknown>, expect: Record<string, unknown> | undefined, where: string): string | null {
+  for (const [key, value] of Object.entries(expect ?? {})) {
+    if (canonical_json(current[key]) !== canonical_json(value)) return `${where}.${key} does not match the expected value`;
+  }
+  return null;
+}
+
+function pick(source: Record<string, unknown>, keys: readonly string[]): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const key of keys) out[key] = source[key];
+  return out;
+}
+
 export function apply_command(doc: LoomDocument, command: Command): CommandStep {
-  const items = get_collection(doc, command.collection);
+  if (command.op === "update_project") {
+    const current: Record<string, unknown> = doc.project;
+    const mismatch = check_expect(current, command.expect, "project");
+    if (mismatch !== null) return fail("precondition_failed", mismatch);
+    const parsed = project_schema.safeParse({ ...current, ...command.set });
+    if (!parsed.success) return fail("invalid_entity", `project: ${format_issues(parsed.error.issues)}`);
+    const keys = Object.keys(command.set);
+    return {
+      ok: true,
+      doc: { ...doc, project: parsed.data },
+      inverse: [{ op: "update_project", set: pick(current, keys), expect: pick(parsed.data, keys) }],
+    };
+  }
   const name = command.collection;
+  const items = get_collection(doc, name);
   switch (command.op) {
     case "insert": {
       const parsed = parse_entity(name, command.entity);
@@ -1790,24 +1925,16 @@ export function apply_command(doc: LoomDocument, command: Command): CommandStep 
       const current = items.find((item) => item.id === command.id);
       if (!current) return fail("precondition_failed", `${name}/${command.id} does not exist`);
       if ("id" in command.set) return fail("invalid_entity", `${name}/${command.id}: id cannot be changed`);
-      for (const [key, value] of Object.entries(command.expect ?? {})) {
-        if (canonical_json(current[key]) !== canonical_json(value)) {
-          return fail("precondition_failed", `${name}/${command.id}.${key} does not match the expected value`);
-        }
-      }
+      const mismatch = check_expect(current, command.expect, `${name}/${command.id}`);
+      if (mismatch !== null) return fail("precondition_failed", mismatch);
       const parsed = parse_entity(name, { ...current, ...command.set });
       if (!parsed.ok) return fail("invalid_entity", `${name}/${command.id}: ${parsed.message}`);
       const updated = parsed.entity;
-      const old_values: Record<string, unknown> = {};
-      const new_values: Record<string, unknown> = {};
-      for (const key of Object.keys(command.set)) {
-        old_values[key] = current[key];
-        new_values[key] = updated[key];
-      }
+      const keys = Object.keys(command.set);
       return {
         ok: true,
         doc: with_collection(doc, name, items.map((item) => (item.id === command.id ? updated : item))),
-        inverse: [{ op: "update", collection: name, id: command.id, set: old_values, expect: new_values }],
+        inverse: [{ op: "update", collection: name, id: command.id, set: pick(current, keys), expect: pick(updated, keys) }],
       };
     }
     case "delete": {
@@ -1834,7 +1961,7 @@ import { null_logger, type Logger } from "../log.ts";
 import { canonicalize_document } from "../model/canonical.ts";
 import { batch_schema, command_schema_version, type Batch, type Command } from "../schema/commands.ts";
 import type { LoomDocument } from "../schema/document.ts";
-import { issue_key, type Issue } from "../validate/issue.ts";
+import { issue_fingerprint, type Issue } from "../validate/issue.ts";
 import { validate_structure } from "../validate/structural.ts";
 import { apply_command } from "./apply_command.ts";
 
@@ -1844,7 +1971,8 @@ export type BatchRejectionCode =
   | "stale_revision"
   | "precondition_failed"
   | "invalid_entity"
-  | "structural_errors_introduced";
+  | "structural_errors_introduced"
+  | "repair_required";
 
 export interface BatchRejection {
   code: BatchRejectionCode;
@@ -1896,12 +2024,26 @@ export function apply_batch(doc: LoomDocument, raw_batch: unknown, log: Logger =
     if (!step.ok) return reject(log, { code: step.code, message: step.message, command_index, issues: [] });
     working = step.doc;
     inverse.unshift(...step.inverse);
-    log.debug("command applied", { batch_id: batch.batch_id, command_index, op: command.op, collection: command.collection });
+    log.debug("command applied", {
+      batch_id: batch.batch_id,
+      command_index,
+      op: command.op,
+      target: command.op === "update_project" ? "project" : command.collection,
+    });
   }
-  const existing = new Set(validate_structure(doc).map(issue_key));
-  const introduced = validate_structure(working).filter((issue) => !existing.has(issue_key(issue)));
-  if (introduced.length > 0) {
-    return reject(log, { code: "structural_errors_introduced", message: `${introduced.length} structural error(s) introduced`, command_index: null, issues: introduced });
+  // Invariant: a valid document stays valid. An already invalid document (e.g. loaded from a hand-edited file)
+  // only accepts repair batches: no new or worsened issue, and strictly fewer issues than before.
+  const after = validate_structure(working);
+  if (after.length > 0) {
+    const before = validate_structure(doc);
+    const known = new Set(before.map(issue_fingerprint));
+    const introduced = after.filter((issue) => !known.has(issue_fingerprint(issue)));
+    if (introduced.length > 0) {
+      return reject(log, { code: "structural_errors_introduced", message: `${introduced.length} structural error(s) introduced or worsened`, command_index: null, issues: introduced });
+    }
+    if (after.length >= before.length) {
+      return reject(log, { code: "repair_required", message: `document has ${before.length} structural error(s); only batches that reduce them are accepted`, command_index: null, issues: after });
+    }
   }
   const next = canonicalize_document({ ...working, revision: doc.revision + 1, applied_batch_ids: [...doc.applied_batch_ids, batch.batch_id] });
   log.info("batch applied", { batch_id: batch.batch_id, revision: next.revision, commands: batch.commands.length });
@@ -1939,7 +2081,7 @@ git add -A && git commit -m "feat(core): command log reducer with atomic, idempo
 
 **Interfaces:**
 - Consumes: `apply_ok`, entity helpers, `build_index`, `canonical_json`.
-- Produces: `ReviewState = "approved" | "rejected" | "stale" | "unreviewed"`, `field_value(index, entity_id, field): unknown`, `latest_review(doc, entity_id, field): Review | null`, `review_state(doc, index, entity_id, field): ReviewState`, `make_review(doc, index, { id, entity_id, field, status }): Review` (stores `canonical_json` of the current value and `doc.revision`).
+- Produces: `ReviewState = "approved" | "rejected" | "stale" | "unreviewed"`, `EvidenceState = "current" | "stale"`, `field_value(index, entity_id, field): unknown`, `latest_review(doc, entity_id, field): Review | null`, `review_state(doc, index, entity_id, field): ReviewState`, `evidence_state(index, evidence): EvidenceState`, `make_review(doc, index, { id, entity_id, field, status }): Review` (stores `canonical_json` of the current value and `doc.revision`), `make_evidence(index, evidence_without_value_json): Evidence` (stores `value_json`). Both builders throw on a field that is not a top-level field of the entity.
 - Produces: `build_synthetic_milestone(): LoomDocument`, `synthetic_asset_sha256`.
 - Fixture facts relied on by Tasks 7 to 10: harnesses `h_engine` (ENGINE_SIDE) and `h_body` (BODY_SIDE); wires `w1`..`w8` labelled `W1`..`W8`; segment `seg_b1_x1` unmeasured; mating `m_x1_x2`; `J3` is SRS; `X2` housing unknown and its terminals candidate; `w2` spec changed after approval; `w7.ends` inferred and unreviewed.
 
@@ -1948,14 +2090,30 @@ git add -A && git commit -m "feat(core): command log reducer with atomic, idempo
 `packages/core/src/validate/review_state.ts`:
 ```ts
 import { canonical_json } from "../model/canonical.ts";
-import type { DocIndex } from "../model/doc_index.ts";
-import type { LoomDocument, Review } from "../schema/document.ts";
+import { has_field, type DocIndex } from "../model/doc_index.ts";
+import type { Evidence, LoomDocument, Review } from "../schema/document.ts";
 
 export type ReviewState = "approved" | "rejected" | "stale" | "unreviewed";
+export type EvidenceState = "current" | "stale";
 
 export function field_value(index: DocIndex, entity_id: string, field: string): unknown {
   const ref = index.by_id.get(entity_id);
   return ref ? (ref.entity as Record<string, unknown>)[field] : undefined;
+}
+
+// Builders are called by UIs and agents with user input; an unknown field is a caller bug, so they throw.
+function require_field(index: DocIndex, entity_id: string, field: string): void {
+  if (!has_field(index, entity_id, field)) throw new Error(`${entity_id} has no top-level field ${field}`);
+}
+
+// Evidence describes one value: it stays current only while the field still holds that value.
+export function evidence_state(index: DocIndex, evidence: Evidence): EvidenceState {
+  return canonical_json(field_value(index, evidence.entity_id, evidence.field)) === evidence.value_json ? "current" : "stale";
+}
+
+export function make_evidence(index: DocIndex, input: Omit<Evidence, "value_json">): Evidence {
+  require_field(index, input.entity_id, input.field);
+  return { ...input, value_json: canonical_json(field_value(index, input.entity_id, input.field)) };
 }
 
 export function latest_review(doc: LoomDocument, entity_id: string, field: string): Review | null {
@@ -1967,7 +2125,8 @@ export function latest_review(doc: LoomDocument, entity_id: string, field: strin
   return latest;
 }
 
-// An approval only holds while the value is byte-identical (canonical json) to what was approved.
+// Approval is bound to the value, not the revision: it holds while the field's canonical json equals the approved
+// value. Reverting to the approved value (for example by undo) restores it; any other change makes it stale.
 export function review_state(doc: LoomDocument, index: DocIndex, entity_id: string, field: string): ReviewState {
   const review = latest_review(doc, entity_id, field);
   if (review === null) return "unreviewed";
@@ -1980,6 +2139,7 @@ export function make_review(
   index: DocIndex,
   input: { id: string; entity_id: string; field: string; status: "approved" | "rejected" },
 ): Review {
+  require_field(index, input.entity_id, input.field);
   return { ...input, reviewed_value_json: canonical_json(field_value(index, input.entity_id, input.field)), revision: doc.revision };
 }
 ```
@@ -1997,7 +2157,7 @@ import { cmd_insert, cmd_update } from "../../src/commands/builders.ts";
 import { build_index } from "../../src/model/doc_index.ts";
 import { create_empty_document } from "../../src/model/empty_document.ts";
 import type { LoomDocument } from "../../src/schema/document.ts";
-import { make_review } from "../../src/validate/review_state.ts";
+import { make_evidence, make_review } from "../../src/validate/review_state.ts";
 import { apply_ok } from "../helpers/apply.ts";
 import {
   candidate, connector, contact, ground, harness, identified, node, part, segment, spec, splice,
@@ -2074,20 +2234,23 @@ export function build_synthetic_milestone(): LoomDocument {
       blob_ref: "synthetic://fixture/diagram.pdf",
       title: "synthetic diagram placeholder (no real content)",
     }),
-    cmd_insert("evidence", {
+    cmd_insert("view_positions", { id: "n_j1", x: 0, y: 0 }),
+    cmd_insert("view_positions", { id: "n_b1", x: 300, y: 0 }),
+  ], "b_build");
+  // Evidence and reviews record the value they describe, so they are added once the entities exist.
+  const index = build_index(doc);
+  doc = apply_ok(doc, [
+    cmd_insert("evidence", make_evidence(index, {
       id: "e_w7_ends",
       entity_id: "w7",
       field: "ends",
       origin: "inferred",
       source: { asset_id: "a_diagram", page_index: 0, bbox: [100, 200, 300, 220] },
       note: "synthetic example of an LLM-inferred connection",
-    }),
-    cmd_insert("evidence", { id: "e_seg_j1_b1_length", entity_id: "seg_j1_b1", field: "length", origin: "measured", source: null, note: "synthetic tape measurement" }),
-    cmd_insert("view_positions", { id: "n_j1", x: 0, y: 0 }),
-    cmd_insert("view_positions", { id: "n_b1", x: 300, y: 0 }),
-  ], "b_build");
-  const index = build_index(doc);
-  doc = apply_ok(doc, [
+    })),
+    cmd_insert("evidence", make_evidence(index, {
+      id: "e_seg_j1_b1_length", entity_id: "seg_j1_b1", field: "length", origin: "measured", source: null, note: "synthetic tape measurement",
+    })),
     cmd_insert("reviews", make_review(doc, index, { id: "r_w1_spec", entity_id: "w1", field: "spec", status: "approved" })),
     cmd_insert("reviews", make_review(doc, index, { id: "r_w2_spec", entity_id: "w2", field: "spec", status: "approved" })),
   ], "b_review");
@@ -2336,7 +2499,7 @@ git add -A && git commit -m "feat(core): route analysis and cut lengths that nev
 **Interfaces:**
 - Consumes: `analyse_route`, `route_length`, `review_state`, `latest_review`, `make_review`, `entity_path`, `sort_issues`.
 - Produces: `ScopeOptions { harness_ids: readonly string[] | null }`, `all_harnesses`, `in_scope(options, harness_id)`; `validate_completeness(doc, options?, index?): Issue[]`; `ValidationLevel = "structural" | "build"`; `validate(doc, { level, harness_ids }, log?): Issue[]`; `is_release_ready(issues): boolean`.
-- Completeness codes (error): `M_WIRE_END_OPEN, M_WIRE_SPEC_UNKNOWN, M_WIRE_UNROUTED, M_ENDPOINT_NODE_MISSING, M_ROUTE_NOT_CONTIGUOUS, M_LENGTH_UNKNOWN, M_PART_UNIDENTIFIED`. Warnings: `W_INFERRED_UNREVIEWED, W_REVIEW_STALE`.
+- Completeness codes (error): `M_WIRE_END_OPEN, M_WIRE_SPEC_UNKNOWN, M_WIRE_UNROUTED, M_ENDPOINT_NODE_MISSING, M_ROUTE_NOT_CONTIGUOUS, M_LENGTH_UNKNOWN, M_PART_UNIDENTIFIED`. Warnings: `W_EVIDENCE_STALE` (evidence no longer matches the value; suppresses the inferred warning for that record), `W_INFERRED_UNREVIEWED`, `W_REVIEW_STALE`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2346,7 +2509,7 @@ import { describe, expect, it } from "vitest";
 import { cmd_insert, cmd_update } from "../src/commands/builders.ts";
 import { build_index } from "../src/model/doc_index.ts";
 import { validate_completeness } from "../src/validate/completeness.ts";
-import { make_review, review_state } from "../src/validate/review_state.ts";
+import { evidence_state, make_review, review_state } from "../src/validate/review_state.ts";
 import { is_release_ready, validate } from "../src/validate/validate.ts";
 import { build_synthetic_milestone } from "./fixtures/synthetic_milestone.ts";
 import { apply_ok } from "./helpers/apply.ts";
@@ -2393,7 +2556,18 @@ describe("completeness validation", () => {
 
     const changed = apply_ok(approved, [cmd_update("wires", "w7", { ends: [to_contact("j3", "1"), to_contact("x2", "1")] })], "b_swap_w7");
     expect(review_state(changed, build_index(changed), "w7", "ends")).toBe("stale");
-    expect(validate_completeness(changed).map((issue) => issue.code)).toContain("W_INFERRED_UNREVIEWED");
+    const codes = validate_completeness(changed).map((issue) => `${issue.code}:${issue.entity_id}`);
+    expect(codes).toContain("W_EVIDENCE_STALE:w7");
+    expect(codes).toContain("W_REVIEW_STALE:w7");
+  });
+
+  it("marks evidence stale when the measured value changes", () => {
+    const doc = build_synthetic_milestone();
+    const measured = doc.evidence.find((e) => e.id === "e_seg_j1_b1_length");
+    if (!measured) throw new Error("fixture evidence missing");
+    expect(evidence_state(build_index(doc), measured)).toBe("current");
+    const remeasured = apply_ok(doc, [cmd_update("segments", "seg_j1_b1", { length: { nominal_mm: 310, tol_mm: 5, datum: null } })], "b_remeasure");
+    expect(validate_completeness(remeasured).map((issue) => `${issue.code}:${issue.entity_id}`)).toContain("W_EVIDENCE_STALE:seg_j1_b1");
   });
 });
 ```
@@ -2426,7 +2600,7 @@ import { all_harnesses, in_scope, type ScopeOptions } from "../model/scope.ts";
 import type { LoomDocument } from "../schema/document.ts";
 import type { PartUse } from "../schema/primitives.ts";
 import { entity_path, sort_issues, type Issue, type IssueSeverity } from "./issue.ts";
-import { latest_review, review_state } from "./review_state.ts";
+import { evidence_state, latest_review, review_state } from "./review_state.ts";
 
 type Emit = (code: string, severity: IssueSeverity, message: string, path: string, entity_id: string, hint: string) => void;
 
@@ -2487,7 +2661,7 @@ function check_parts(doc: LoomDocument, index: DocIndex, options: ScopeOptions, 
     const owner = index.connectors.get(k.connector_id);
     if (!owner || !in_scope(options, owner.harness_id)) continue;
     check(k.terminal, "terminal", owner.label, entity_path("contacts", k.id, "terminal"), k.id);
-    if (k.seal !== null) check(k.seal, "seal", owner.label, entity_path("contacts", k.id, "seal"), k.id);
+    if (k.seal !== null) check(k.seal.part, "seal", owner.label, entity_path("contacts", k.id, "seal", "part"), k.id);
   }
   for (const s of doc.splices) {
     if (in_scope(options, s.harness_id)) check(s.part, "splice", s.label, entity_path("splices", s.id, "part"), s.id);
@@ -2496,6 +2670,10 @@ function check_parts(doc: LoomDocument, index: DocIndex, options: ScopeOptions, 
 
 function check_reviews(doc: LoomDocument, index: DocIndex, emit: Emit): void {
   for (const e of doc.evidence) {
+    if (evidence_state(index, e) === "stale") {
+      emit("W_EVIDENCE_STALE", "warning", `${e.entity_id}.${e.field} changed after this ${e.origin} evidence was recorded`, entity_path("evidence", e.id), e.entity_id, "record evidence for the new value or revert it");
+      continue;
+    }
     if (e.origin === "inferred" && review_state(doc, index, e.entity_id, e.field) !== "approved") {
       emit("W_INFERRED_UNREVIEWED", "warning", `${e.entity_id}.${e.field} is inferred and not approved`, entity_path("evidence", e.id), e.entity_id, "check the value against its source and approve it");
     }
@@ -2567,7 +2745,7 @@ git add -A && git commit -m "feat(core): build completeness checks and review-st
 - Consumes: `build_index`, `endpoint_key`, `cavity_key`, `push_to`, `compare_strings`.
 - Produces: `MatingState = "connected" | "disconnected"`, `NetOptions { harness_ids: readonly string[] | null; mating_states: Readonly<Record<string, MatingState>>; default_mating_state: MatingState }`, `Net { net_id; endpoint_keys: string[]; wire_ids: string[] }`, `derive_nets(doc, options, index?): Net[]` (net_id = smallest endpoint key; sorted by net_id).
 - Produces: `TestBoundary { harness_ids: readonly string[]; mating_states; excluded_connector_ids: readonly string[]; include_srs: boolean }`, `TestNet { net_id; points: string[] }`, `ContinuityCheck { net_id; from; to }`, `IsolationCheck { net_a; net_b; point_a; point_b }`, `TestData { boundary; nets; continuity; isolation; excluded_points }`, `derive_test_data(doc, boundary, index?): TestData`.
-- Rules: unlisted matings default to disconnected on the bench; splices are not test points; connectors mated (connected) inside the boundary are not test points; SRS connectors are excluded unless `include_srs`; continuity is a star from the first point of each net; isolation compares the first point of every pair of nets.
+- Rules: unlisted matings default to disconnected on the bench; splices are not test points; connectors mated (connected) inside the boundary are not test points; a net touching an excluded connector (listed, or SRS unless `include_srs`) is excluded whole, its points go to `excluded_points` and its id to `excluded_net_ids`; continuity is a star from the first point of each net; isolation compares the first point of every pair of included nets. `TestData` also has `excluded_net_ids: string[]`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -2623,19 +2801,34 @@ describe("bench test data", () => {
       { net_a: "contact:j1_k1", net_b: "contact:j1_k3", point_a: "J1:1", point_b: "J1:3" },
       { net_a: "contact:j1_k2", net_b: "contact:j1_k3", point_a: "G1", point_b: "J1:3" },
     ]);
+    expect(data.excluded_net_ids).toEqual([]);
     expect(data.excluded_points).toEqual([]);
   });
 
-  it("hides mated connectors and excludes SRS by default", () => {
+  it("hides mated connectors and excludes whole SRS circuits by default", () => {
     const data = derive_test_data(doc, {
       harness_ids: ["h_engine", "h_body"], mating_states: { m_x1_x2: "connected" }, excluded_connector_ids: [], include_srs: false,
     });
+    expect(data.nets).toEqual([{ net_id: "contact:j1_k2", points: ["G1", "J1:2"] }]);
+    expect(data.continuity).toEqual([{ net_id: "contact:j1_k2", from: "G1", to: "J1:2" }]);
+    expect(data.isolation).toEqual([]);
+    expect(data.excluded_net_ids).toEqual(["contact:j1_k1", "contact:j1_k3"]);
+    expect(data.excluded_points).toEqual(["J1:1", "J1:3", "J2:1", "J2:2", "J3:1", "J3:2"]);
+  });
+
+  it("never tests SRS circuits on a body-only bench", () => {
+    const data = derive_test_data(doc, { harness_ids: ["h_body"], mating_states: {}, excluded_connector_ids: [], include_srs: false });
+    expect(data.nets).toEqual([]);
+    expect(data.isolation).toEqual([]);
+    expect(data.excluded_points).toEqual(["J3:1", "J3:2", "X2:1", "X2:2"]);
+  });
+
+  it("includes SRS circuits only when asked", () => {
+    const data = derive_test_data(doc, { harness_ids: ["h_body"], mating_states: {}, excluded_connector_ids: [], include_srs: true });
     expect(data.nets).toEqual([
-      { net_id: "contact:j1_k1", points: ["J1:1", "J2:1"] },
-      { net_id: "contact:j1_k2", points: ["G1", "J1:2"] },
-      { net_id: "contact:j1_k3", points: ["J1:3", "J2:2"] },
+      { net_id: "contact:j3_k1", points: ["J3:1", "X2:1"] },
+      { net_id: "contact:j3_k2", points: ["J3:2", "X2:2"] },
     ]);
-    expect(data.excluded_points).toEqual(["J3:1", "J3:2"]);
   });
 });
 ```
@@ -2764,6 +2957,7 @@ export interface TestData {
   nets: TestNet[];
   continuity: ContinuityCheck[];
   isolation: IsolationCheck[];
+  excluded_net_ids: string[];
   excluded_points: string[];
 }
 
@@ -2780,18 +2974,23 @@ export function derive_test_data(doc: LoomDocument, boundary: TestBoundary, inde
       mated.add(b.id);
     }
   }
-  const excluded = new Set<string>();
+  const owner_of = (key: string) => {
+    if (!key.startsWith("contact:")) return undefined;
+    const k = index.contacts.get(key.slice("contact:".length));
+    const owner = k ? index.connectors.get(k.connector_id) : undefined;
+    return k && owner ? { contact: k, owner } : undefined;
+  };
+  const is_excluded_connector = (key: string): boolean => {
+    const found = owner_of(key);
+    if (!found || !scope(found.owner.harness_id)) return false;
+    return boundary.excluded_connector_ids.includes(found.owner.id) || (found.owner.safety_class === "srs" && !boundary.include_srs);
+  };
   const point_label = (key: string): string | null => {
-    if (key.startsWith("contact:")) {
-      const k = index.contacts.get(key.slice("contact:".length));
-      const owner = k ? index.connectors.get(k.connector_id) : undefined;
-      if (!k || !owner || !scope(owner.harness_id) || mated.has(owner.id)) return null;
-      const label = `${owner.label}:${owner.cavities.find((cavity) => cavity.id === k.cavity_id)?.label ?? k.cavity_id}`;
-      if (boundary.excluded_connector_ids.includes(owner.id) || (owner.safety_class === "srs" && !boundary.include_srs)) {
-        excluded.add(label);
-        return null;
-      }
-      return label;
+    const found = owner_of(key);
+    if (found) {
+      const { contact: k, owner } = found;
+      if (!scope(owner.harness_id) || mated.has(owner.id)) return null;
+      return `${owner.label}:${owner.cavities.find((cavity) => cavity.id === k.cavity_id)?.label ?? k.cavity_id}`;
     }
     if (key.startsWith("ground_point:")) {
       const g = index.ground_points.get(key.slice("ground_point:".length));
@@ -2799,9 +2998,18 @@ export function derive_test_data(doc: LoomDocument, boundary: TestBoundary, inde
     }
     return null;
   };
+  // A net that touches an excluded connector (SRS by default) is an excluded circuit: it gets no continuity or
+  // isolation check at all, so no test voltage reaches it.
   const test_nets: TestNet[] = [];
+  const excluded_net_ids: string[] = [];
+  const excluded_points = new Set<string>();
   for (const net of nets) {
     const points = net.endpoint_keys.map(point_label).filter((p): p is string => p !== null).sort();
+    if (net.endpoint_keys.some(is_excluded_connector)) {
+      excluded_net_ids.push(net.net_id);
+      for (const p of points) excluded_points.add(p);
+      continue;
+    }
     if (points.length > 0) test_nets.push({ net_id: net.net_id, points });
   }
   const continuity: ContinuityCheck[] = [];
@@ -2818,7 +3026,7 @@ export function derive_test_data(doc: LoomDocument, boundary: TestBoundary, inde
       if (point_a !== undefined && point_b !== undefined) isolation.push({ net_a: a.net_id, net_b: b.net_id, point_a, point_b });
     }
   });
-  return { boundary, nets: test_nets, continuity, isolation, excluded_points: [...excluded].sort() };
+  return { boundary, nets: test_nets, continuity, isolation, excluded_net_ids, excluded_points: [...excluded_points].sort() };
 }
 ```
 
@@ -2851,7 +3059,7 @@ git add -A && git commit -m "feat(core): nets with mating states and bench conti
 **Interfaces:**
 - Consumes: `analyse_route`, `cut_length`, `round_mm`, `ScopeOptions`, `in_scope`, `all_harnesses`, `compare_strings`.
 - Produces: `WireListRow { wire_id; harness_label; wire_label; from; to; cross_section_mm2: number | null; designation: string | null; colour: string; route_status: RouteStatus; cut_length: LengthValue }`, `end_label(index, end): string` (`"J1:1"`, splice/ground label, `"OPEN"`), `colour_code(spec): string` (`"G-W"`, `"UNKNOWN"`), `derive_wire_list(doc, options?, index?): WireListRow[]` sorted by harness label then wire label.
-- Produces: `BomCategory = "housing" | "terminal" | "seal" | "splice" | "wire"`, `BomLine { category; part_id: string | null; part_number: string | null; description; quantity: number; unit: "pcs" | "mm"; unknown_quantity: number; identification: string }`, `derive_bom(doc, options?, index?): BomLine[]` sorted by category, description, identification. Wire lines sum known cut lengths and count wires with unknown or unavailable length in `unknown_quantity`.
+- Produces: `BomCategory = "housing" | "terminal" | "seal" | "splice" | "wire"`, `BomLine { category; part_id: string | null; part_number: string | null; description; quantity: number; unit: "pcs" | "mm"; unknown_quantity: number; identification: string }`, `derive_bom(doc, options?, index?): BomLine[]` sorted by category, description, identification, part_id. Seals count `seal.quantity`. Wire lines group by cross-section plus description (designation as written, colour, insulation), sum known cut lengths and count wires with unknown or unavailable length in `unknown_quantity`.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -3000,11 +3208,11 @@ const category_order: Record<BomCategory, number> = { housing: 0, terminal: 1, s
 
 export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnesses, index: DocIndex = build_index(doc)): BomLine[] {
   const lines = new Map<string, BomLine>();
-  const add_part = (category: BomCategory, use: PartUse): void => {
+  const add_part = (category: BomCategory, use: PartUse, quantity = 1): void => {
     const key = `${category}|${use.part_id ?? "unidentified"}|${use.identification}`;
     const existing = lines.get(key);
     if (existing) {
-      existing.quantity += 1;
+      existing.quantity += quantity;
       return;
     }
     const found = use.part_id === null ? undefined : index.parts.get(use.part_id);
@@ -3013,7 +3221,7 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
       part_id: use.part_id,
       part_number: found?.part_number ?? null,
       description: found?.description ?? found?.part_number ?? use.part_id ?? `UNIDENTIFIED ${category}`,
-      quantity: 1,
+      quantity,
       unit: "pcs",
       unknown_quantity: 0,
       identification: use.identification,
@@ -3024,21 +3232,27 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
     const owner = index.connectors.get(k.connector_id);
     if (!owner || !in_scope(options, owner.harness_id)) continue;
     add_part("terminal", k.terminal);
-    if (k.seal !== null) add_part("seal", k.seal);
+    if (k.seal !== null) add_part("seal", k.seal.part, k.seal.quantity);
   }
   for (const s of doc.splices) if (in_scope(options, s.harness_id)) add_part("splice", s.part);
   for (const w of doc.wires) {
     if (!in_scope(options, w.harness_id)) continue;
-    const description = `${w.spec.cross_section_mm2 ?? "UNKNOWN"} mm2 ${colour_code(w.spec)}${w.spec.insulation === null ? "" : ` ${w.spec.insulation}`}`;
-    const key = `wire|${description}`;
-    const line = lines.get(key) ?? { category: "wire" as const, part_id: null, part_number: null, description, quantity: 0, unit: "mm" as const, unknown_quantity: 0, identification: "n/a" };
+    // Group by the nominal designation ("0.5 mm2", "20 AWG", Toyota "0.5") as written, never by area alone.
+    const size = w.spec.designation ?? `${w.spec.cross_section_mm2 ?? "UNKNOWN"} mm2`;
+    const description = `${size} ${colour_code(w.spec)}${w.spec.insulation === null ? "" : ` ${w.spec.insulation}`}`;
+    const key = `wire|${w.spec.cross_section_mm2 ?? "unknown"}|${description}`;
+    const line: BomLine = lines.get(key) ?? { category: "wire", part_id: null, part_number: null, description, quantity: 0, unit: "mm", unknown_quantity: 0, identification: "n/a" };
     const length = cut_length(index, w);
     if (length.status === "known" && length.nominal_mm !== null) line.quantity = round_mm(line.quantity + length.nominal_mm);
     else line.unknown_quantity += 1;
     lines.set(key, line);
   }
   return [...lines.values()].sort(
-    (a, b) => category_order[a.category] - category_order[b.category] || compare_strings(a.description, b.description) || compare_strings(a.identification, b.identification),
+    (a, b) =>
+      category_order[a.category] - category_order[b.category] ||
+      compare_strings(a.description, b.description) ||
+      compare_strings(a.identification, b.identification) ||
+      compare_strings(a.part_id ?? "", b.part_id ?? ""),
   );
 }
 ```
@@ -3139,6 +3353,17 @@ parsnip entity add --type project -o "loomsmith: open-source wiring harness tool
 - Generic `insert` / `update` / `delete` commands plus whole-document structural validation after each batch, instead of one handler per domain command. Keeps the command log small and sync-friendly; domain macros can expand to these later.
 - Reviews store `reviewed_value_json` (canonical json of the approved value), so staleness is derived and never needs a write.
 - Unlisted matings default to disconnected in bench test data and to the caller's choice in `derive_nets`.
+- Codex review of this plan (27 Sep 2026, /Users/macmini/projects/codex/loomsmith_impl_plan_review_27092026.txt) confirmed all code typechecks and all fixture expectations; its design findings were applied:
+  - A net touching an SRS (or listed) connector is excluded whole from bench tests, not just its SRS probe points.
+  - `identified` / `candidate` part uses must carry a `part_id` (`S_PART_IDENTITY`).
+  - A valid document stays valid; an invalid one accepts only repair batches (`repair_required`), compared by key plus message so a worsening issue is caught.
+  - Evidence stores `value_json` and turns stale (`W_EVIDENCE_STALE`) when the value changes.
+  - Approvals are bound to the value, not the revision: reverting to an approved value (undo) restores the approval. Chosen deliberately so undo does not destroy review work.
+  - Evidence and reviews address top-level fields only in M1 (`spec`, not `spec.cross_section_mm2`); builders throw and validation flags `S_FIELD_UNKNOWN` otherwise. Nested field paths are a later extension.
+  - Ids use `^[A-Za-z0-9_.-]{1,128}$` so composite keys cannot collide; `view_positions` ids are unique within their collection.
+  - `asset.blob_ref` accepts only `asset://`, `synthetic://` or relative paths.
+  - Added contact gender, seal quantity, splice capacity (`S_SPLICE_OVERFILLED`), and `update_project`.
+  - BOM wire lines keep the designation as written; ties sort by part id.
 
 ## Deviations from the spec
 
