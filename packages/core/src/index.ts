@@ -7,3 +7,6 @@ export * from "./schema/format_issues.ts";
 export * from "./model/canonical.ts";
 export * from "./model/empty_document.ts";
 export * from "./migrate/load_document.ts";
+export * from "./model/doc_index.ts";
+export * from "./validate/issue.ts";
+export * from "./validate/structural.ts";
