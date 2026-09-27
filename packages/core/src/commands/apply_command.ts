@@ -29,6 +29,19 @@ function fail(code: CommandFailureCode, message: string): CommandStep {
   return { ok: false, code, message };
 }
 
+// Looks up the one entity with `id` in `items`. Fails if none exists, and fails (rather than picking one) if
+// more than one shares the id: that is only possible on an already-invalid document (S_DUPLICATE_ID), and
+// picking one silently would delete/update the other without any record of it.
+function find_unique(items: readonly AnyEntity[], id: string, name: CollectionName): { ok: true; entity: AnyEntity } | { ok: false; step: CommandStep } {
+  const matches = items.filter((item) => item.id === id);
+  if (matches.length > 1) {
+    return { ok: false, step: fail("precondition_failed", `${name}/${id} is ambiguous: ${matches.length} entities share this id; repair the duplicate first`) };
+  }
+  const entity = matches[0];
+  if (!entity) return { ok: false, step: fail("precondition_failed", `${name}/${id} does not exist`) };
+  return { ok: true, entity };
+}
+
 function check_expect(current: Record<string, unknown>, expect: Record<string, unknown> | undefined, where: string): string | null {
   for (const [key, value] of Object.entries(expect ?? {})) {
     if (canonical_json(current[key]) !== canonical_json(value)) return `${where}.${key} does not match the expected value`;
@@ -71,10 +84,9 @@ export function apply_command(doc: LoomDocument, command: Command): CommandStep 
       };
     }
     case "update": {
-      const matches = items.filter((item) => item.id === command.id);
-      if (matches.length > 1) return fail("precondition_failed", `${name}/${command.id} is ambiguous: ${matches.length} entities share this id; repair the duplicate first`);
-      const current = matches[0];
-      if (!current) return fail("precondition_failed", `${name}/${command.id} does not exist`);
+      const found = find_unique(items, command.id, name);
+      if (!found.ok) return found.step;
+      const current = found.entity;
       if ("id" in command.set) return fail("invalid_entity", `${name}/${command.id}: id cannot be changed`);
       const mismatch = check_expect(current, command.expect, `${name}/${command.id}`);
       if (mismatch !== null) return fail("precondition_failed", mismatch);
@@ -89,10 +101,9 @@ export function apply_command(doc: LoomDocument, command: Command): CommandStep 
       };
     }
     case "delete": {
-      const matches = items.filter((item) => item.id === command.id);
-      if (matches.length > 1) return fail("precondition_failed", `${name}/${command.id} is ambiguous: ${matches.length} entities share this id; repair the duplicate first`);
-      const current = matches[0];
-      if (!current) return fail("precondition_failed", `${name}/${command.id} does not exist`);
+      const found = find_unique(items, command.id, name);
+      if (!found.ok) return found.step;
+      const current = found.entity;
       if (command.expect_entity !== undefined && canonical_json(current) !== canonical_json(command.expect_entity)) {
         return fail("precondition_failed", `${name}/${command.id} changed since it was read`);
       }
