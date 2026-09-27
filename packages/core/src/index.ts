@@ -10,3 +10,6 @@ export * from "./migrate/load_document.ts";
 export * from "./model/doc_index.ts";
 export * from "./validate/issue.ts";
 export * from "./validate/structural.ts";
+export * from "./commands/builders.ts";
+export * from "./commands/apply_command.ts";
+export * from "./commands/apply_batch.ts";
