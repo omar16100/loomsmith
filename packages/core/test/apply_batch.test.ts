@@ -101,6 +101,17 @@ describe("apply_batch", () => {
     expect(repair.ok).toBe(true);
   });
 
+  it("rejects delete and update of an id shared by more than one entity in the same collection", () => {
+    const valid = small_doc();
+    // A hand-edited/loaded document can carry two rows with the same id in one collection (S_DUPLICATE_ID);
+    // repair must not delete both while returning an inverse that only restores one of them.
+    const dup_harness = { ...valid, harnesses: [...valid.harnesses, harness("h1", "DUP")] };
+    const del = apply_batch(dup_harness, make_batch(dup_harness, [cmd_delete("harnesses", "h1")], "b1", T));
+    expect(rejection(del)?.code).toBe("precondition_failed");
+    const upd = apply_batch(dup_harness, make_batch(dup_harness, [cmd_update("harnesses", "h1", { label: "RENAMED" })], "b1", T));
+    expect(rejection(upd)?.code).toBe("precondition_failed");
+  });
+
   it("updates the project label with an inverse", () => {
     const doc = small_doc();
     const result = apply_batch(doc, make_batch(doc, [{ op: "update_project", set: { label: "RENAMED" }, expect: { label: "SMALL" } }], "b1", T));

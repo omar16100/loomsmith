@@ -71,7 +71,9 @@ export function apply_command(doc: LoomDocument, command: Command): CommandStep 
       };
     }
     case "update": {
-      const current = items.find((item) => item.id === command.id);
+      const matches = items.filter((item) => item.id === command.id);
+      if (matches.length > 1) return fail("precondition_failed", `${name}/${command.id} is ambiguous: ${matches.length} entities share this id; repair the duplicate first`);
+      const current = matches[0];
       if (!current) return fail("precondition_failed", `${name}/${command.id} does not exist`);
       if ("id" in command.set) return fail("invalid_entity", `${name}/${command.id}: id cannot be changed`);
       const mismatch = check_expect(current, command.expect, `${name}/${command.id}`);
@@ -87,7 +89,9 @@ export function apply_command(doc: LoomDocument, command: Command): CommandStep 
       };
     }
     case "delete": {
-      const current = items.find((item) => item.id === command.id);
+      const matches = items.filter((item) => item.id === command.id);
+      if (matches.length > 1) return fail("precondition_failed", `${name}/${command.id} is ambiguous: ${matches.length} entities share this id; repair the duplicate first`);
+      const current = matches[0];
       if (!current) return fail("precondition_failed", `${name}/${command.id} does not exist`);
       if (command.expect_entity !== undefined && canonical_json(current) !== canonical_json(command.expect_entity)) {
         return fail("precondition_failed", `${name}/${command.id} changed since it was read`);
