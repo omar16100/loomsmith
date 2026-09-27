@@ -24,7 +24,9 @@ const category_order: Record<BomCategory, number> = { housing: 0, terminal: 1, s
 export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnesses, index: DocIndex = build_index(doc)): BomLine[] {
   const lines = new Map<string, BomLine>();
   const add_part = (category: BomCategory, use: PartUse, quantity = 1): void => {
-    const key = `${category}|${use.part_id ?? "unidentified"}|${use.identification}`;
+    // "" can never be a real part_id (id_schema requires at least one character), so it is a safe sentinel
+    // for "no part_id" that cannot collide with a real part literally named e.g. "unidentified".
+    const key = `${category}|${use.part_id ?? ""}|${use.identification}`;
     const existing = lines.get(key);
     if (existing) {
       existing.quantity += quantity;
@@ -62,11 +64,18 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
     else line.unknown_quantity += 1;
     lines.set(key, line);
   }
-  return [...lines.values()].sort(
-    (a, b) =>
-      category_order[a.category] - category_order[b.category] ||
-      compare_strings(a.description, b.description) ||
-      compare_strings(a.identification, b.identification) ||
-      compare_strings(a.part_id ?? "", b.part_id ?? ""),
-  );
+  // The trailing key comparison is the full grouping identity (includes cross_section_mm2 for wire lines),
+  // so two lines that display the same description/identification/part_id but belong to distinct groups
+  // (e.g. mismatched designation vs. actual cross-section) still sort in a fixed order, independent of the
+  // input collections' order.
+  return [...lines.entries()]
+    .sort(
+      ([key_a, a], [key_b, b]) =>
+        category_order[a.category] - category_order[b.category] ||
+        compare_strings(a.description, b.description) ||
+        compare_strings(a.identification, b.identification) ||
+        compare_strings(a.part_id ?? "", b.part_id ?? "") ||
+        compare_strings(key_a, key_b),
+    )
+    .map(([, line]) => line);
 }
