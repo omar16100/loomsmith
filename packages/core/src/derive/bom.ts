@@ -13,7 +13,11 @@ export interface BomLine {
   part_id: string | null;
   part_number: string | null;
   description: string;
-  quantity: number;
+  // Parts: the count. Wires: total cut length in mm, or null while any wire in the line has an unknown cut
+  // length (a partial sum is never presented as the total).
+  quantity: number | null;
+  // Parts: equal to quantity. Wires: sum of the known cut lengths only.
+  known_quantity: number;
   unit: "pcs" | "mm";
   unknown_quantity: number;
   identification: string;
@@ -29,7 +33,8 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
     const key = `${category}|${use.part_id ?? ""}|${use.identification}`;
     const existing = lines.get(key);
     if (existing) {
-      existing.quantity += quantity;
+      existing.known_quantity += quantity;
+      existing.quantity = existing.known_quantity;
       return;
     }
     const found = use.part_id === null ? undefined : index.parts.get(use.part_id);
@@ -39,6 +44,7 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
       part_number: found?.part_number ?? null,
       description: found?.description ?? found?.part_number ?? use.part_id ?? `UNIDENTIFIED ${category}`,
       quantity,
+      known_quantity: quantity,
       unit: "pcs",
       unknown_quantity: 0,
       identification: use.identification,
@@ -58,10 +64,13 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
     const size = w.spec.designation ?? `${w.spec.cross_section_mm2 ?? "UNKNOWN"} mm2`;
     const description = `${size} ${colour_code(w.spec)}${w.spec.insulation === null ? "" : ` ${w.spec.insulation}`}`;
     const key = `wire|${w.spec.cross_section_mm2 ?? "unknown"}|${description}`;
-    const line: BomLine = lines.get(key) ?? { category: "wire", part_id: null, part_number: null, description, quantity: 0, unit: "mm", unknown_quantity: 0, identification: "n/a" };
+    const line: BomLine = lines.get(key) ?? {
+      category: "wire", part_id: null, part_number: null, description, quantity: null, known_quantity: 0, unit: "mm", unknown_quantity: 0, identification: "n/a",
+    };
     const length = cut_length(index, w);
-    if (length.status === "known" && length.nominal_mm !== null) line.quantity = round_mm(line.quantity + length.nominal_mm);
+    if (length.status === "known" && length.nominal_mm !== null) line.known_quantity = round_mm(line.known_quantity + length.nominal_mm);
     else line.unknown_quantity += 1;
+    line.quantity = line.unknown_quantity > 0 ? null : line.known_quantity;
     lines.set(key, line);
   }
   // The trailing key comparison is the full grouping identity (includes cross_section_mm2 for wire lines),

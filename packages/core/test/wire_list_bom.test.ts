@@ -27,21 +27,25 @@ describe("wire list", () => {
 
 describe("bill of materials", () => {
   it("counts parts and wire length, keeping unknowns visible", () => {
-    const line = (category: string, part_id: string | null, part_number: string | null, description: string, quantity: number, identification: string, unit = "pcs", unknown_quantity = 0) =>
-      ({ category, part_id, part_number, description, quantity, unit, unknown_quantity, identification });
+    const part_line = (category: string, part_id: string | null, part_number: string | null, description: string, quantity: number, identification: string) =>
+      ({ category, part_id, part_number, description, quantity, known_quantity: quantity, unit: "pcs", unknown_quantity: 0, identification });
+    // A wire line's quantity is null while any wire in it has an unknown cut length: a partial sum is never
+    // presented as the total; known_quantity keeps the partial sum visible.
+    const wire_line = (description: string, quantity: number | null, known_quantity: number, unknown_quantity: number) =>
+      ({ category: "wire", part_id: null, part_number: null, description, quantity, known_quantity, unit: "mm", unknown_quantity, identification: "n/a" });
     expect(derive_bom(doc)).toEqual([
-      line("housing", "p_housing_2", "SYN-H2", "2-way housing (synthetic)", 3, "identified"),
-      line("housing", "p_housing_3", "SYN-H3", "3-way housing (synthetic)", 1, "identified"),
-      line("housing", null, null, "UNIDENTIFIED housing", 1, "unknown"),
-      line("terminal", "p_terminal", "SYN-T1", "terminal 0.3-0.85 mm2 (synthetic)", 2, "candidate"),
-      line("terminal", "p_terminal", "SYN-T1", "terminal 0.3-0.85 mm2 (synthetic)", 9, "identified"),
-      line("seal", "p_seal", "SYN-S1", "seal (synthetic)", 3, "identified"),
-      line("splice", "p_splice", "SYN-SP1", "splice crimp (synthetic)", 1, "identified"),
-      line("wire", null, null, "0.5 mm2 G-W", 910, "n/a", "mm", 1),
-      line("wire", null, null, "0.5 mm2 R", 460, "n/a", "mm", 2),
-      line("wire", null, null, "0.85 mm2 B", 420, "n/a", "mm", 0),
-      line("wire", null, null, "0.85 mm2 R", 490, "n/a", "mm", 0),
-      line("wire", null, null, "UNKNOWN mm2 UNKNOWN", 0, "n/a", "mm", 1),
+      part_line("housing", "p_housing_2", "SYN-H2", "2-way housing (synthetic)", 3, "identified"),
+      part_line("housing", "p_housing_3", "SYN-H3", "3-way housing (synthetic)", 1, "identified"),
+      part_line("housing", null, null, "UNIDENTIFIED housing", 1, "unknown"),
+      part_line("terminal", "p_terminal", "SYN-T1", "terminal 0.3-0.85 mm2 (synthetic)", 2, "candidate"),
+      part_line("terminal", "p_terminal", "SYN-T1", "terminal 0.3-0.85 mm2 (synthetic)", 9, "identified"),
+      part_line("seal", "p_seal", "SYN-S1", "seal (synthetic)", 3, "identified"),
+      part_line("splice", "p_splice", "SYN-SP1", "splice crimp (synthetic)", 1, "identified"),
+      wire_line("0.5 mm2 G-W", null, 910, 1),
+      wire_line("0.5 mm2 R", null, 460, 2),
+      wire_line("0.85 mm2 B", 420, 420, 0),
+      wire_line("0.85 mm2 R", 490, 490, 0),
+      wire_line("UNKNOWN mm2 UNKNOWN", null, 0, 1),
     ]);
   });
 
@@ -58,8 +62,8 @@ describe("bill of materials", () => {
     };
     const housing_lines = derive_bom(doc_with_collision).filter((line) => line.category === "housing");
     expect(housing_lines).toEqual([
-      { category: "housing", part_id: null, part_number: null, description: "UNIDENTIFIED housing", quantity: 1, unit: "pcs", unknown_quantity: 0, identification: "unknown" },
-      { category: "housing", part_id: "unidentified", part_number: "SYN-X1", description: "housing named unidentified (synthetic)", quantity: 1, unit: "pcs", unknown_quantity: 0, identification: "unknown" },
+      { category: "housing", part_id: null, part_number: null, description: "UNIDENTIFIED housing", quantity: 1, known_quantity: 1, unit: "pcs", unknown_quantity: 0, identification: "unknown" },
+      { category: "housing", part_id: "unidentified", part_number: "SYN-X1", description: "housing named unidentified (synthetic)", quantity: 1, known_quantity: 1, unit: "pcs", unknown_quantity: 0, identification: "unknown" },
     ]);
   });
 
@@ -73,7 +77,7 @@ describe("bill of materials", () => {
     const w_b = { ...wire("wb", "h1", "WB", base.wires[0]!.ends, spec(0.75, "R"), null), spec: { ...spec(0.75, "R"), designation: "0.5" } };
     const forward = { ...base, wires: [w_a, w_b] };
     const reversed = { ...base, wires: [w_b, w_a] };
-    const key = (line: { quantity: number; unknown_quantity: number }) => `${line.quantity}:${line.unknown_quantity}`;
+    const key = (line: { quantity: number | null; known_quantity: number; unknown_quantity: number }) => `${line.quantity}:${line.known_quantity}:${line.unknown_quantity}`;
     expect(derive_bom(forward).filter((l) => l.category === "wire").map(key)).toEqual(
       derive_bom(reversed).filter((l) => l.category === "wire").map(key),
     );
