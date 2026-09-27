@@ -2,7 +2,7 @@
 
 Category: Architecture. Source of truth for containers, components, dependencies and data flows. Update on every architecture change. Design rationale: /Users/macmini/projects/loomsmith/docs/27092026_loomsmith_design.md.
 
-Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`, 72 tests
+Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`, 80 tests
 pass; `packages/cli`, `packages/ingest`, `apps/web`, `eval/` are still target architecture,
 not built).
 

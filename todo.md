@@ -10,7 +10,7 @@
 - [x] parsnip entity
 
 ## Later milestones
-- [x] M1 model draft + golden synthetic fixture: `@loomsmith/core` (schema, command log, structural and completeness validation, evidence/review state, routes and cut lengths, nets, SRS-safe bench test data, wire list, BOM), 72 tests pass, branch `feat/m0_m1_core`
+- [x] M1 model draft + golden synthetic fixture: `@loomsmith/core` (schema, command log, structural and completeness validation, evidence/review state, routes and cut lengths, nets, SRS-safe bench test data, wire list, BOM), 80 tests pass, branch `feat/m0_m1_core`
 - [ ] M1b owner: pick LS400 sub-harness, photos + measurements
 - [ ] M2 CLI
 - [ ] M3 ingest spike

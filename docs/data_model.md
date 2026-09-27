@@ -9,7 +9,7 @@ and derivations implemented in `@loomsmith/core` as of M1 (Task 10). It document
 what the code in `/Users/macmini/projects/loomsmith/packages/core/src` does; it is not a
 design proposal. Source of truth for each section is the file named in that section.
 
-Last verified: 27 Sep 2026, against branch `feat/m0_m1_core`, 72 passing tests.
+Last verified: 27 Sep 2026, against branch `feat/m0_m1_core`, 80 passing tests (12 files).
 
 ## 2. File format
 
