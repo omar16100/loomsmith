@@ -83,8 +83,12 @@ function check_reviews(doc: LoomDocument, index: DocIndex, emit: Emit): void {
     }
   }
   for (const r of doc.reviews) {
-    if (latest_review(doc, r.entity_id, r.field)?.id === r.id && review_state(doc, index, r.entity_id, r.field) === "stale") {
+    if (latest_review(doc, r.entity_id, r.field)?.id !== r.id) continue;
+    const state = review_state(doc, index, r.entity_id, r.field);
+    if (state === "stale") {
       emit("W_REVIEW_STALE", "warning", `${r.entity_id}.${r.field} changed after it was reviewed`, entity_path("reviews", r.id), r.entity_id, "review the new value");
+    } else if (state === "rejected") {
+      emit("W_REVIEW_REJECTED", "warning", `${r.entity_id}.${r.field} was reviewed and rejected`, entity_path("reviews", r.id), r.entity_id, "record a corrected value for this field");
     }
   }
 }

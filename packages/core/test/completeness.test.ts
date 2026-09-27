@@ -54,6 +54,16 @@ describe("completeness validation", () => {
     expect(codes).toContain("W_REVIEW_STALE:w7");
   });
 
+  it("flags a rejected review as blocking, not silently release-ready", () => {
+    const doc = build_synthetic_milestone();
+    const index = build_index(doc);
+    const rejected = apply_ok(doc, [
+      cmd_insert("reviews", make_review(doc, index, { id: "r_seg_b1_x1", entity_id: "seg_b1_x1", field: "length", status: "rejected" })),
+    ], "b_reject_seg_b1_x1");
+    const codes = validate_completeness(rejected).map((issue) => `${issue.code}:${issue.entity_id}`);
+    expect(codes).toContain("W_REVIEW_REJECTED:seg_b1_x1");
+  });
+
   it("marks evidence stale when the measured value changes", () => {
     const doc = build_synthetic_milestone();
     const measured = doc.evidence.find((e) => e.id === "e_seg_j1_b1_length");
