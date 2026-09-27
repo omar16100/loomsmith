@@ -2,7 +2,7 @@
 
 Category: Architecture. Source of truth for containers, components, dependencies and data flows. Update on every architecture change. Design rationale: /Users/macmini/projects/loomsmith/docs/27092026_loomsmith_design.md.
 
-Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`, 80 tests
+Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`, 99 tests
 pass; `packages/cli`, `packages/ingest`, `apps/web`, `eval/` are still target architecture,
 not built).
 
@@ -45,7 +45,7 @@ for the file format, entity fields, validation codes and derivation rules.
 | `migrate/load_document.ts` | schema_version checks, migrations, parse |
 | `validate/issue.ts`, `validate/structural.ts`, `validate/completeness.ts`, `validate/review_state.ts`, `validate/validate.ts` | Structural checks (`S_*`) and manufacturing-completeness checks (`M_*`, `W_*`), issue objects with code, severity, JSON path, entity id, fix hint; evidence/review staleness |
 | `commands/builders.ts`, `commands/apply_command.ts`, `commands/apply_batch.ts` | Command definitions with preconditions, reducer `apply_batch(doc, batch) -> result`, inverses, idempotency by batch_id, expected_revision check |
-| `derive/topology.ts`, `derive/nets.ts`, `derive/test_data.ts`, `derive/wire_list.ts`, `derive/bom.ts` | Route analysis, route/cut lengths, union-find nets with mating states, bench continuity/isolation test data, wire list, BOM |
+| `derive/topology.ts`, `derive/nets.ts`, `derive/test_data.ts`, `derive/wire_list.ts`, `derive/bom.ts` | Route analysis, route/cut lengths, union-find nets with mating states (`active_matings` shared by nets and test data), bench continuity/isolation test data (fails closed: runs `validate/structural.ts` and boundary checks first and returns problems instead of data), wire list, BOM (unknown wire length is `null`, never 0) |
 | `log.ts` | Logger interface injected by callers |
 | `export/` | Not built yet (M2+): CSV, SVG, HTML string renderers of derived data |
 | `assets/` | Not built yet: asset manifest module (the `assets` collection and `blob_ref` convention exist in `schema/document.ts` now; a dedicated manifest builder is future work) |
@@ -59,6 +59,6 @@ for the file format, entity fields, validation codes and derivation rules.
 ## Invariants
 
 - Derived data is never stored in the document.
-- The reducer is deterministic: same doc + batch gives byte-identical output in Node and browser.
+- The reducer is deterministic: core reads no Node or DOM API (the core tsconfig has `types: []` and `lib: ["ES2023"]`) and no clock or RNG (checked by the ast-grep purity scan run before each milestone commit, not yet in CI), and the same doc + batch gives the same canonical output within one runtime (tested in Node). Byte-identical output across Node and the browser is a design goal to be verified in M4, when the web editor exists; it is not yet a tested fact.
 - Credentials never appear in documents, command logs, autosave or logs.
 - OEM-derived data never lives in this repo.

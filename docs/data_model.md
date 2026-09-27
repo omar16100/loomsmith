@@ -5,11 +5,12 @@ Category: Reference.
 ## 1. Scope
 
 This document describes the file format, entities, evidence/review model, command log
-and derivations implemented in `@loomsmith/core` as of M1 (Task 10). It documents only
+and derivations implemented in `@loomsmith/core` as of M1 (Task 10 plus the final review
+fixes F1 to F5). It documents only
 what the code in `/Users/macmini/projects/loomsmith/packages/core/src` does; it is not a
 design proposal. Source of truth for each section is the file named in that section.
 
-Last verified: 27 Sep 2026, against branch `feat/m0_m1_core`, 80 passing tests (12 files).
+Last verified: 27 Sep 2026, against branch `feat/m0_m1_core`, 99 passing tests (12 files).
 
 ## 2. File format
 
@@ -40,8 +41,10 @@ A loomsmith document is a single JSON object:
   content-equality comparisons (evidence/review staleness, command `expect`/`expect_entity`).
 
 **Id rules** (`/Users/macmini/projects/loomsmith/packages/core/src/schema/primitives.ts`):
-- `id_schema`: `^[A-Za-z0-9_.-]{1,128}$`, a restricted alphabet so composite keys such as
-  `contact:<id>` or `<connector_id>/<cavity_id>` cannot collide with a real id.
+- `id_schema`: `^(?!\.\.?$)[A-Za-z0-9_.-]{1,128}$`, a restricted alphabet so composite keys
+  such as `contact:<id>` or `<connector_id>/<cavity_id>` cannot collide with a real id. The
+  ids `.` and `..` are rejected, so an id used as a file or path name never means "this
+  directory" or "the parent directory".
 - Ids are unique across all collections except `view_positions`
   (`build_index` in `/Users/macmini/projects/loomsmith/packages/core/src/model/doc_index.ts`
   skips `view_positions` when building the global `by_id` map and collecting `duplicate_ids`).
@@ -49,6 +52,9 @@ A loomsmith document is a single JSON object:
   (`S_DUPLICATE_ID` in `structural.ts`).
 - Cavity ids are unique only within their owning connector; cavity **labels** are also
   unique within a connector (`S_DUPLICATE_CAVITY`, `S_DUPLICATE_LABEL`).
+- `label_schema` (every `label`, including cavity and project labels): 1 to 64 characters
+  and no `:`. A bench probe label is `<connector label>:<cavity label>`, so it can never
+  equal a ground point label or another probe label.
 - Labels are separate from ids and have their own uniqueness scopes: harness labels are
   unique document-wide; connector/splice/ground_point labels are unique document-wide
   (shared "project label" namespace); wire labels are unique per harness
@@ -74,7 +80,7 @@ One row per collection, fields from `document.ts`.
 | `nodes` | `id`, `harness_id`, `kind` (`connector`\|`breakout`\|`clip`\|`grommet`\|`splice`\|`ground`), `ref_id` (id or `null`) |
 | `segments` | `id`, `harness_id`, `node_a`, `node_b`, `length` (length object) |
 | `matings` | `id`, `connector_a`, `connector_b`, `cavity_map` (array of `{ cavity_a, cavity_b }`, at least 1) |
-| `assets` | `id`, `sha256` (64 hex chars), `media_type`, `blob_ref` (`asset://...`, `synthetic://...` or a relative path only), `title` |
+| `assets` | `id`, `sha256` (64 hex chars), `media_type`, `blob_ref` (`asset://...`, `synthetic://...` or a relative path only; no absolute POSIX, Windows or UNC path, no `?`/`#` query or fragment, and no `..` path segment at the start or after `/` or `\`, so `../x.pdf`, `pdfs/../../etc/passwd` and `asset://a/../b` are rejected), `title` |
 | `evidence` | `id`, `entity_id`, `field`, `origin` (`measured`\|`documented`\|`inferred`\|`assumed`), `value_json`, `source` (`{ asset_id, page_index, bbox }` or `null`), `note` |
 | `reviews` | `id`, `entity_id`, `field`, `status` (`approved`\|`rejected`), `reviewed_value_json`, `revision` |
 | `view_positions` | `id`, `x`, `y` |
@@ -102,14 +108,18 @@ and `/Users/macmini/projects/loomsmith/packages/core/src/schema/document.ts`.
   returns the review's `status` only while the field's current canonical JSON still equals
   `reviewed_value_json`; any other change makes the review `stale`. Reverting a field back
   to a previously approved value (for example by applying an inverse batch / undo) makes
-  the old approval live again, deliberately, so undo never destroys review work.
+  the old approval live again only if no later review exists for that `(entity_id, field)`:
+  `review_state` always judges the latest review, so if the changed value was reviewed
+  afterwards, that later review stays the latest and the reverted field reads as `stale`
+  against it.
   `latest_review` picks the review with the highest `revision`, tie-broken by the highest
   `id`, for a given `(entity_id, field)`. Structural validation rejects a review whose
   `revision` is ahead of the document's current `revision` (`S_REVIEW_FUTURE_REVISION`), so
   a review can only be recorded at or before the revision it approves.
 - **Rejected reviews**: the latest, current (non-stale) review of a field with
-  `status: "rejected"` is reported as `W_REVIEW_REJECTED`; a value the reviewer explicitly
-  rejected does not pass silently.
+  `status: "rejected"` is reported as `M_REVIEW_REJECTED` with severity `error`, so it
+  blocks `is_release_ready` like any other `M_*` code; a value the reviewer explicitly
+  rejected never passes into a build.
 - **Stale rule for evidence**: `evidence_state` compares the evidence's stored
   `value_json` to the field's current canonical JSON; a mismatch is `stale` and is reported
   as `W_EVIDENCE_STALE`. A `reviews` row whose own `review_state` is `stale` and that is
@@ -158,8 +168,12 @@ Defined in `/Users/macmini/projects/loomsmith/packages/core/src/schema/commands.
   and the new/worsened issues are returned.
   An **already-invalid document** (for example one hand-edited outside the reducer) instead
   enters repair mode: issues are compared by `issue_fingerprint` (code + entity_id + path +
-  message); the batch is accepted only if it introduces no new or worsened issue and
-  strictly reduces the total issue count, otherwise it is rejected with `repair_required`.
+  message). A batch that introduces any new or worsened issue is rejected with
+  `structural_errors_introduced` (the same code as on a valid document, carrying only the
+  introduced issues). A batch that introduces nothing new but does not strictly reduce the
+  total issue count is rejected with `repair_required` (carrying all remaining issues). The
+  batch is accepted only if it introduces no new or worsened issue and strictly reduces the
+  total issue count.
 
 ## 6. Validation codes
 
@@ -199,7 +213,8 @@ From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts
 | `M_ENDPOINT_NODE_MISSING` | one of a wire's ends has no topology node to route from/to |
 | `M_ROUTE_NOT_CONTIGUOUS` | a wire's route segments do not chain from its start node to its end node |
 | `M_LENGTH_UNKNOWN` | a wire's route is contiguous but crosses one or more segments with unknown `nominal_mm` |
-| `M_PART_UNIDENTIFIED` | a housing, terminal or splice part use is not `identified` |
+| `M_PART_UNIDENTIFIED` | a housing, terminal, seal or splice part use is not `identified` |
+| `M_REVIEW_REJECTED` | the latest, current (non-stale) review of a field has `status: "rejected"`: the reviewer flagged the current value as wrong, so the build is blocked until a corrected value is recorded |
 
 ### Review warnings (`W_*`, warning; build-level only)
 
@@ -208,7 +223,6 @@ From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts
 | `W_EVIDENCE_STALE` | an evidence row's recorded value no longer matches the field's current value |
 | `W_INFERRED_UNREVIEWED` | evidence with `origin: "inferred"` is not currently approved |
 | `W_REVIEW_STALE` | the latest review of a field is stale (the field changed since it was reviewed) |
-| `W_REVIEW_REJECTED` | the latest, current (non-stale) review of a field has `status: "rejected"`: the reviewer flagged the current value as wrong |
 
 `validate()` (`validate.ts`) always runs structural checks; completeness checks run only
 at `level: "build"`, scoped to `harness_ids` via `ScopeOptions`/`in_scope`
@@ -234,22 +248,46 @@ here is stored in the document.
   Lengths are rounded to 3 decimal places (`round_mm`, i.e. micrometre precision).
 - **Nets** (`derive_nets`, `/Users/macmini/projects/loomsmith/packages/core/src/derive/nets.ts`):
   union-find over wire endpoints (`contact:<id>`, `splice:<id>`, `ground_point:<id>`; `open`
-  ends contribute no key) plus mating cavity pairs whose mating is `connected` (per-mating
-  override in `options.mating_states`, else `options.default_mating_state`). Scoped by
-  `harness_ids` (`in_scope`). Each net's `net_id` is its lowest endpoint key
-  (lexicographic); `endpoint_keys` and `wire_ids` are sorted.
+  ends contribute no key) plus the cavity pairs of every active mating. `active_matings`
+  (exported from `nets.ts`, the one place this decision is made, also used by
+  `derive_test_data`) returns the matings that are `connected` (per-mating override in
+  `mating_states`, an own-property lookup, else the default state) and whose two
+  connectors both exist and are in scope. Wires are scoped by `harness_ids` (`in_scope`).
+  Each net's `net_id` is its lowest endpoint key (lexicographic); `endpoint_keys` and
+  `wire_ids` are sorted.
 - **Bench boundary rules** (`derive_test_data`,
-  `/Users/macmini/projects/loomsmith/packages/core/src/derive/test_data.ts`): nets are
-  derived with `default_mating_state: "disconnected"` so only explicitly connected matings
-  join harnesses. A net that touches an excluded connector (any listed in
-  `excluded_connector_ids`, or any `safety_class: "srs"` connector unless
-  `include_srs: true`) is excluded **whole**: it gets no continuity or isolation check at
-  all (`excluded_net_ids`, `excluded_points`), not just the SRS/excluded probe points, so no
-  test voltage reaches an SRS circuit. A point on a connector that has been mated away
-  (its counterpart is `connected` in scope) is not a probe point. `continuity` pairs each
-  remaining net's first point with every other point in that net. `isolation` pairs the
-  first point of each remaining net with the first point of every later net (no self-pairs,
-  no duplicate unordered pairs).
+  `/Users/macmini/projects/loomsmith/packages/core/src/derive/test_data.ts`): the input is a
+  `TestBoundary` (`harness_ids`, `mating_states`, `excluded_connector_ids`, `include_srs`)
+  and the result is a `TestDataResult`: `{ ok: true, data: TestData }` or
+  `{ ok: false, problems: BoundaryProblem[] }`. The boundary **fails closed**: if any
+  problem exists, no test data at all is produced. A `BoundaryProblem` is
+  `{ code, id, message }`; problems are sorted by `code`, then `id`:
+  - `unknown_harness`: a `harness_ids` entry is not a harness in the document.
+  - `unknown_mating`: a `mating_states` key is not a mating in the document (whatever
+    state it names).
+  - `unknown_connector`: an `excluded_connector_ids` entry is not a connector in the
+    document.
+  - `mating_crosses_boundary`: a mating declared `connected` has exactly one of its two
+    connectors in scope (the bench would otherwise test a path that leaves the boundary,
+    for example through an unmodelled SRS connector).
+  - `structural_errors` (`id: null`): `validate_structure` reports any issue; the message
+    gives the count.
+
+  With no problem, nets are derived with `default_mating_state: "disconnected"`, so only
+  explicitly connected matings (both sides in scope, via `active_matings`) join harnesses.
+  A net that touches an excluded connector (any listed in `excluded_connector_ids`, or any
+  `safety_class: "srs"` connector unless `include_srs: true`) is excluded **whole**,
+  whichever harness that connector is in (`is_excluded_endpoint`): it gets no continuity or
+  isolation check at all (`excluded_net_ids`, `excluded_points`), not just the
+  SRS/excluded probe points, so no test voltage reaches an SRS circuit. Probe points are
+  in-scope contacts, labelled `<connector label>:<cavity label>`, and in-scope ground
+  points, labelled with the ground point label (labels cannot contain `:`, so these never
+  collide). A contact on a connector that has been mated away (its mating is active) is
+  not a probe point, and splices are never probe points. A net that is not excluded but
+  has no probe point left is listed in `untestable_net_ids` instead of silently vanishing.
+  `continuity` pairs each remaining net's first point with every other point in that net.
+  `isolation` pairs the first point of each remaining net with the first point of every
+  later net (no self-pairs, no duplicate unordered pairs).
 - **Wire list** (`derive_wire_list`,
   `/Users/macmini/projects/loomsmith/packages/core/src/derive/wire_list.ts`): one row per
   wire in scope with harness label, wire label, `from`/`to` endpoint labels
@@ -257,11 +295,24 @@ here is stored in the document.
   `designation`, a `colour` code (`base_colour` plus `stripe_colours` joined with `-`, or
   `UNKNOWN`), route status and cut length. Sorted by harness label then wire label.
 - **BOM** (`derive_bom`, `/Users/macmini/projects/loomsmith/packages/core/src/derive/bom.ts`):
-  one line per distinct `(category, part_id or "unidentified", identification)` for
-  housings, terminals, seals (quantity from the seal's own `quantity`) and splices; wire
-  lines are grouped by `(cross_section_mm2 or "unknown", description)` where the
-  description keeps the wire's `designation` exactly as written (never re-derived from
-  `cross_section_mm2` alone) plus colour code and insulation. Wire quantity is the summed
-  known cut length in mm, with a separate `unknown_quantity` counter for wires whose cut
-  length could not be computed. Sorted by category, then description, then identification,
-  then part id.
+  one line per distinct `(category, part_id, identification)` for housings, terminals,
+  seals (quantity from the seal's own `quantity`) and splices. A part use with no
+  `part_id` is grouped under the empty-string sentinel `""` (never a valid id, so a real
+  part literally named `unidentified` is never merged with it) and described as
+  `UNIDENTIFIED <category>`. Wire lines are grouped by `(cross_section_mm2 or "unknown",
+  description)` where the description keeps the wire's `designation` exactly as written
+  (never re-derived from `cross_section_mm2` alone) plus colour code and insulation.
+  Quantities (`BomLine`):
+  - `quantity` (`number | null`): for part lines the count (`unit: "pcs"`); for wire lines
+    (`unit: "mm"`) the total cut length, or `null` whenever any wire in the line has an
+    unknown or unavailable cut length, so a partial sum is never shown as the total.
+  - `known_quantity` (`number`): for part lines equal to `quantity`; for wire lines the
+    sum of the known cut lengths only (rounded with `round_mm`).
+  - `unknown_quantity` (`number`): for wire lines the number of wires whose cut length
+    could not be computed; always 0 for part lines.
+
+  Sorted by category (`housing`, `terminal`, `seal`, `splice`, `wire`), then description,
+  then identification, then part id, then the full grouping key as the final tiebreak, so
+  two lines that display the same text but belong to distinct groups (for example the
+  same designation written on two different cross-sections) still sort in a fixed order
+  independent of input order.
