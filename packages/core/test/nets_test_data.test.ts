@@ -2,6 +2,8 @@ import { describe, expect, it } from "vitest";
 import { derive_nets } from "../src/derive/nets.ts";
 import { derive_test_data } from "../src/derive/test_data.ts";
 import { build_synthetic_milestone } from "./fixtures/synthetic_milestone.ts";
+import { contact, small_doc } from "./helpers/entities.ts";
+import type { LoomDocument, Wire } from "../src/schema/document.ts";
 
 const doc = build_synthetic_milestone();
 
@@ -25,6 +27,36 @@ describe("nets", () => {
   it("keeps harnesses apart when their mating is disconnected", () => {
     const nets = derive_nets(doc, { harness_ids: null, mating_states: { m_x1_x2: "disconnected" }, default_mating_state: "connected" });
     expect(nets.map((net) => net.net_id)).toEqual(["contact:j1_k1", "contact:j1_k2", "contact:j1_k3", "contact:j3_k1", "contact:j3_k2"]);
+  });
+
+  it("does not let a mating id shadow an inherited Object property and defeat the default mating state", () => {
+    const base = small_doc();
+    const with_mating: LoomDocument = {
+      ...base,
+      contacts: [...base.contacts, contact("j1", "2"), contact("j2", "2")],
+      matings: [{ id: "constructor", connector_a: "j1", connector_b: "j2", cavity_map: [{ cavity_a: "j1_c2", cavity_b: "j2_c2" }] }],
+    };
+    const nets = derive_nets(with_mating, { harness_ids: null, mating_states: {}, default_mating_state: "connected" });
+    expect(nets.map((net) => net.endpoint_keys)).toContainEqual(["contact:j1_k2", "contact:j2_k2"]);
+  });
+
+  it("never overflows the call stack on a long chain of wires, regardless of endpoint order", () => {
+    const pad = (i: number) => String(i).padStart(6, "0");
+    const n = 12000;
+    const wires: Wire[] = [];
+    for (let i = n; i > 0; i -= 1) {
+      wires.push({
+        id: `wc${pad(i)}`,
+        harness_id: "h1",
+        label: `WC${pad(i)}`,
+        ends: [{ kind: "splice", splice_id: `sc${pad(i)}` }, { kind: "splice", splice_id: `sc${pad(i - 1)}` }],
+        spec: { cross_section_mm2: null, designation: null, base_colour: null, stripe_colours: [], insulation: null },
+        route: null,
+        allowances: { end_a_mm: 0, end_b_mm: 0, service_mm: 0 },
+      });
+    }
+    const long_chain: LoomDocument = { ...small_doc(), wires };
+    expect(() => derive_nets(long_chain, { harness_ids: null, mating_states: {}, default_mating_state: "connected" })).not.toThrow();
   });
 });
 

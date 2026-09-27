@@ -1,7 +1,7 @@
 import { build_index, type DocIndex } from "../model/doc_index.ts";
 import { in_scope } from "../model/scope.ts";
 import type { LoomDocument } from "../schema/document.ts";
-import { derive_nets, type MatingState } from "./nets.ts";
+import { derive_nets, mating_state, type MatingState } from "./nets.ts";
 
 export interface TestBoundary {
   harness_ids: readonly string[];
@@ -43,7 +43,7 @@ export function derive_test_data(doc: LoomDocument, boundary: TestBoundary, inde
   const scope = (harness_id: string): boolean => in_scope(scope_options, harness_id);
   const mated = new Set<string>();
   for (const m of doc.matings) {
-    if ((boundary.mating_states[m.id] ?? "disconnected") !== "connected") continue;
+    if (mating_state(boundary.mating_states, m.id, "disconnected") !== "connected") continue;
     const a = index.connectors.get(m.connector_a);
     const b = index.connectors.get(m.connector_b);
     if (a && b && scope(a.harness_id) && scope(b.harness_id)) {

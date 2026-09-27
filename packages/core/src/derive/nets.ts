@@ -17,17 +17,28 @@ export interface Net {
   wire_ids: string[];
 }
 
+// Own-property lookup: a mating id equal to an inherited Object.prototype member name (e.g. "constructor")
+// must not shadow the caller's default_mating_state with a prototype value.
+export function mating_state(states: Readonly<Record<string, MatingState>>, id: string, fallback: MatingState): MatingState {
+  return Object.hasOwn(states, id) ? states[id]! : fallback;
+}
+
 function make_union_find() {
   const parent = new Map<string, string>();
-  const find = (key: string): string => {
-    const up = parent.get(key);
-    if (up === undefined) {
-      parent.set(key, key);
-      return key;
+  // Iterative with path compression: a recursive find() can overflow the call stack on a long, unlucky
+  // chain of unions (a harness with thousands of wires chained end to end).
+  const find = (start: string): string => {
+    let key = start;
+    if (!parent.has(key)) parent.set(key, key);
+    const path: string[] = [];
+    while (true) {
+      const up = parent.get(key)!;
+      if (up === key) break;
+      path.push(key);
+      key = up;
     }
-    if (up === key) return key;
-    const root = find(up);
-    parent.set(key, root);
+    const root = key;
+    for (const step of path) parent.set(step, root);
     return root;
   };
   const union = (a: string, b: string): void => {
@@ -52,7 +63,7 @@ export function derive_nets(doc: LoomDocument, options: NetOptions, index: DocIn
     if (a !== null && b !== null) uf.union(a, b);
   }
   for (const m of doc.matings) {
-    if ((options.mating_states[m.id] ?? options.default_mating_state) !== "connected") continue;
+    if (mating_state(options.mating_states, m.id, options.default_mating_state) !== "connected") continue;
     const a = index.connectors.get(m.connector_a);
     const b = index.connectors.get(m.connector_b);
     if (!a || !b || !in_scope(scope_options, a.harness_id) || !in_scope(scope_options, b.harness_id)) continue;
