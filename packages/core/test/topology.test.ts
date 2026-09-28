@@ -76,17 +76,21 @@ describe("routes and lengths", () => {
 
   it("requires consecutive segments to meet at the same point, whichever way they are stored", () => {
     // The route passes connector J3: s1 is measured to J3's mating face, s2 from its back face, so the distance between
-    // the two faces is in neither segment.
+    // the two faces is in neither segment. s2 has a different datum at each of its own ends (J3's back face, J2's
+    // mating face, which is 25 mm past J2's back face) so reversing its storage actually proves datum_at reads by
+    // node id, not by storage position.
     const base = small_doc();
-    const through_j3 = (s1_datum_at_j3: Datum | null, reverse_s2: boolean): LoomDocument => {
-      const s2 = segment("s2", "h1", "n_j3", "n_j2", 300, 5, 0, ["connector_back_face", "connector_back_face"]);
+    const through_j3 = (s1_datum_at_j3: Datum | null, reverse_s2: boolean, s2_datum_at_j3: Datum | null = "connector_back_face"): LoomDocument => {
+      const s2 = segment("s2", "h1", "n_j3", "n_j2", 325, 5, 0, [s2_datum_at_j3, "connector_mating_face"]);
       const stored = reverse_s2 ? { ...s2, node_a: s2.node_b, node_b: s2.node_a, length: { ...s2.length, datum_a: s2.length.datum_b, datum_b: s2.length.datum_a } } : s2;
       return {
         ...base,
         connectors: [...base.connectors, connector("j3", "h1", "J3", ["1"])],
         nodes: [...base.nodes, node("n_j3", "h1", "connector", "j3")],
         segments: [segment("s1", "h1", "n_j1", "n_j3", 200, 5, 0, ["connector_back_face", s1_datum_at_j3]), stored],
-        wires: base.wires.map((item) => ({ ...item, route: ["s1", "s2"] })),
+        wires: base.wires.map((item) => ({
+          ...item, route: ["s1", "s2"], allowances: { ...item.allowances, end_b: { datum: "connector_mating_face" as const, beyond_datum_mm: -5 } },
+        })),
       };
     };
     for (const reverse_s2 of [false, true]) {
@@ -96,6 +100,8 @@ describe("routes and lengths", () => {
       // An internal end with no datum is just as unknown as an outer one.
       expect(cut(through_j3(null, reverse_s2))).toMatchObject({ status: "unknown", nominal_mm: null, datum_problems: ["s1 at n_j3: datum unknown"] });
       expect(cut(through_j3("connector_back_face", reverse_s2)).nominal_mm).toBe(540);
+      // Same gap, but the unknown datum is on the leaving side of s2 at n_j3 rather than the reaching side of s1.
+      expect(cut(through_j3("connector_back_face", reverse_s2, null))).toMatchObject({ status: "unknown", nominal_mm: null, datum_problems: ["s2 at n_j3: datum unknown"] });
     }
   });
 

@@ -177,21 +177,28 @@ describe("completeness validation", () => {
   });
 
   it("checks the datums where consecutive segments meet at the connector they pass", () => {
-    const through_j3 = (s1_datum_at_j3: Datum | null) => complete_small_doc((doc) => ({
-      ...doc,
-      connectors: [...doc.connectors, { ...connector("j3", "h1", "J3", ["1"]), housing: identified("p_housing") }],
-      nodes: [...doc.nodes, node("n_j3", "h1", "connector", "j3")],
-      segments: [
-        segment("s1", "h1", "n_j1", "n_j3", 200, 5, 0, ["connector_back_face", s1_datum_at_j3]),
-        segment("s2", "h1", "n_j3", "n_j2", 300, 5, 0, ["connector_back_face", "connector_back_face"]),
-      ],
-      wires: doc.wires.map((w) => ({ ...w, route: ["s1", "s2"] })),
-    }));
-    // Only s1 carries the recorded measurement evidence, so s2 is also unmeasured.
-    expect(build_paths(through_j3("connector_mating_face"))).toEqual(["M_LENGTH_UNMEASURED:error:segments/s2/length", "M_ROUTE_DATUM_MISMATCH:error:wires/w1/route"]);
-    const unmarked = validate(through_j3(null), { level: "build", harness_ids: null });
-    expect(unmarked.map((issue) => `${issue.code}:${issue.severity}:${issue.path}`)).toEqual(["M_LENGTH_DATUM_UNKNOWN:error:segments/s1/length", "M_LENGTH_UNMEASURED:error:segments/s2/length"]);
-    expect(is_release_ready(unmarked)).toBe(false);
+    const through_j3 = (s1_datum_at_j3: Datum | null, s2_datum_at_j3: Datum | null = "connector_back_face") => {
+      const doc = complete_small_doc((doc) => ({
+        ...doc,
+        connectors: [...doc.connectors, { ...connector("j3", "h1", "J3", ["1"]), housing: identified("p_housing") }],
+        nodes: [...doc.nodes, node("n_j3", "h1", "connector", "j3")],
+        segments: [
+          segment("s1", "h1", "n_j1", "n_j3", 200, 5, 0, ["connector_back_face", s1_datum_at_j3]),
+          segment("s2", "h1", "n_j3", "n_j2", 300, 5, 0, [s2_datum_at_j3, "connector_back_face"]),
+        ],
+        wires: doc.wires.map((w) => ({ ...w, route: ["s1", "s2"] })),
+      }));
+      // s2 carries current measured evidence too, like s1, so each case below has exactly one blocker.
+      const s2_measured = make_evidence(build_index(doc), { id: "e_s2_length", entity_id: "s2", field: "length", origin: "measured", source: null, note: null });
+      return { ...doc, evidence: [...doc.evidence, s2_measured] };
+    };
+    expect(build_paths(through_j3("connector_mating_face"))).toEqual(["M_ROUTE_DATUM_MISMATCH:error:wires/w1/route"]);
+    const s1_unmarked = validate(through_j3(null), { level: "build", harness_ids: null });
+    expect(s1_unmarked.map((issue) => `${issue.code}:${issue.severity}:${issue.path}`)).toEqual(["M_LENGTH_DATUM_UNKNOWN:error:segments/s1/length"]);
+    expect(is_release_ready(s1_unmarked)).toBe(false);
+    const s2_unmarked = validate(through_j3("connector_back_face", null), { level: "build", harness_ids: null });
+    expect(s2_unmarked.map((issue) => `${issue.code}:${issue.severity}:${issue.path}`)).toEqual(["M_LENGTH_DATUM_UNKNOWN:error:segments/s2/length"]);
+    expect(is_release_ready(s2_unmarked)).toBe(false);
   });
 
   it("measures a same-node wire from one point on that node", () => {
