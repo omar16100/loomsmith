@@ -2,7 +2,7 @@ import { compare_strings } from "../model/canonical.ts";
 import { build_index, type DocIndex } from "../model/doc_index.ts";
 import { all_harnesses, in_scope, type ScopeOptions } from "../model/scope.ts";
 import type { LoomDocument, WireEnd, WireSpec } from "../schema/document.ts";
-import { analyse_route, cut_length, type LengthValue, type RouteStatus } from "./topology.ts";
+import { analyse_route, cut_length, type CutLengthValue, type RouteStatus } from "./topology.ts";
 
 export interface WireListRow {
   wire_id: string;
@@ -14,7 +14,7 @@ export interface WireListRow {
   designation: string | null;
   colour: string;
   route_status: RouteStatus;
-  cut_length: LengthValue;
+  cut_length: CutLengthValue;
 }
 
 export function end_label(index: DocIndex, end: WireEnd): string {

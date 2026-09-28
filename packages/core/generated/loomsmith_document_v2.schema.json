@@ -8,7 +8,7 @@
     },
     "schema_version": {
       "type": "number",
-      "const": 1
+      "const": 2
     },
     "document_id": {
       "type": "string",
@@ -812,23 +812,92 @@
           "allowances": {
             "type": "object",
             "properties": {
-              "end_a_mm": {
-                "type": "number",
-                "minimum": 0
+              "end_a": {
+                "type": "object",
+                "properties": {
+                  "datum": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "connector_back_face",
+                          "connector_mating_face",
+                          "breakout_centre",
+                          "clip_centre",
+                          "grommet_centre",
+                          "splice_centre",
+                          "ground_stud_centre"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "beyond_datum_mm": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "datum",
+                  "beyond_datum_mm"
+                ],
+                "additionalProperties": false
               },
-              "end_b_mm": {
-                "type": "number",
-                "minimum": 0
+              "end_b": {
+                "type": "object",
+                "properties": {
+                  "datum": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "enum": [
+                          "connector_back_face",
+                          "connector_mating_face",
+                          "breakout_centre",
+                          "clip_centre",
+                          "grommet_centre",
+                          "splice_centre",
+                          "ground_stud_centre"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "beyond_datum_mm": {
+                    "type": [
+                      "number",
+                      "null"
+                    ]
+                  }
+                },
+                "required": [
+                  "datum",
+                  "beyond_datum_mm"
+                ],
+                "additionalProperties": false
               },
-              "service_mm": {
-                "type": "number",
-                "minimum": 0
+              "service_loop_mm": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
               }
             },
             "required": [
-              "end_a_mm",
-              "end_b_mm",
-              "service_mm"
+              "end_a",
+              "end_b",
+              "service_loop_mm"
             ],
             "additionalProperties": false
           }
@@ -925,7 +994,7 @@
                   }
                 ]
               },
-              "tol_mm": {
+              "tol_plus_mm": {
                 "anyOf": [
                   {
                     "type": "number",
@@ -936,7 +1005,56 @@
                   }
                 ]
               },
-              "datum": {
+              "tol_minus_mm": {
+                "anyOf": [
+                  {
+                    "type": "number",
+                    "minimum": 0
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "datum_a": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "connector_back_face",
+                      "connector_mating_face",
+                      "breakout_centre",
+                      "clip_centre",
+                      "grommet_centre",
+                      "splice_centre",
+                      "ground_stud_centre"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "datum_b": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "enum": [
+                      "connector_back_face",
+                      "connector_mating_face",
+                      "breakout_centre",
+                      "clip_centre",
+                      "grommet_centre",
+                      "splice_centre",
+                      "ground_stud_centre"
+                    ]
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "note": {
                 "anyOf": [
                   {
                     "type": "string",
@@ -951,10 +1069,44 @@
             },
             "required": [
               "nominal_mm",
-              "tol_mm",
-              "datum"
+              "tol_plus_mm",
+              "tol_minus_mm",
+              "datum_a",
+              "datum_b",
+              "note"
             ],
             "additionalProperties": false
+          },
+          "length_estimate": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "min_mm": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "max_mm": {
+                    "type": "number",
+                    "exclusiveMinimum": 0
+                  },
+                  "method": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 500
+                  }
+                },
+                "required": [
+                  "min_mm",
+                  "max_mm",
+                  "method"
+                ],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         },
         "required": [
@@ -962,7 +1114,8 @@
           "harness_id",
           "node_a",
           "node_b",
-          "length"
+          "length",
+          "length_estimate"
         ],
         "additionalProperties": false
       }

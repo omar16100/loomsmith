@@ -2,6 +2,7 @@ import { cmd_insert, cmd_update } from "../../src/commands/builders.ts";
 import { build_index } from "../../src/model/doc_index.ts";
 import { create_empty_document } from "../../src/model/empty_document.ts";
 import type { LoomDocument } from "../../src/schema/document.ts";
+import type { Datum } from "../../src/schema/primitives.ts";
 import { make_evidence, make_review } from "../../src/validate/review_state.ts";
 import { apply_ok } from "../helpers/apply.ts";
 import {
@@ -18,6 +19,10 @@ export const synthetic_asset_sha256 = "2482dd3f269bca15de96089d4caa5fccb1675ff10
 export function build_synthetic_milestone(): LoomDocument {
   const E = "h_engine";
   const B = "h_body";
+  const at_connector: Datum = "connector_back_face";
+  const at_breakout: Datum = "breakout_centre";
+  const at_splice: Datum = "splice_centre";
+  const at_ground: Datum = "ground_stud_centre";
   const terminal = identified("p_terminal");
   const seal = identified("p_seal");
   let doc = create_empty_document("doc_synthetic_milestone", "SYNTHETIC MILESTONE (not a real vehicle)");
@@ -53,11 +58,11 @@ export function build_synthetic_milestone(): LoomDocument {
     cmd_insert("nodes", node("n_s1", E, "splice", "s1")),
     cmd_insert("nodes", node("n_g1", E, "ground", "g1")),
     cmd_insert("nodes", node("n_b1", E, "breakout", null)),
-    cmd_insert("segments", segment("seg_j1_b1", E, "n_j1", "n_b1", 300, 5)),
-    cmd_insert("segments", segment("seg_b1_s1", E, "n_b1", "n_s1", 120, 3)),
-    cmd_insert("segments", segment("seg_s1_j2", E, "n_s1", "n_j2", 450, 5)),
-    cmd_insert("segments", segment("seg_b1_x1", E, "n_b1", "n_x1", null, null)),
-    cmd_insert("segments", segment("seg_b1_g1", E, "n_b1", "n_g1", 80, 2)),
+    cmd_insert("segments", segment("seg_j1_b1", E, "n_j1", "n_b1", 300, 5, 0, [at_connector, at_breakout])),
+    cmd_insert("segments", segment("seg_b1_s1", E, "n_b1", "n_s1", 120, 3, 1, [at_breakout, at_splice])),
+    cmd_insert("segments", segment("seg_s1_j2", E, "n_s1", "n_j2", 450, 5, 0, [at_splice, at_connector])),
+    cmd_insert("segments", segment("seg_b1_x1", E, "n_b1", "n_x1", null, null, 0, [at_breakout, at_connector])),
+    cmd_insert("segments", segment("seg_b1_g1", E, "n_b1", "n_g1", 80, 2, 0, [at_breakout, at_ground])),
     cmd_insert("wires", wire("w1", E, "W1", [to_contact("j1", "1"), to_splice("s1")], spec(0.5, "R"), ["seg_j1_b1", "seg_b1_s1"])),
     cmd_insert("wires", wire("w2", E, "W2", [to_splice("s1"), to_contact("j2", "1")], spec(0.5, "R"), ["seg_s1_j2"])),
     cmd_insert("wires", wire("w3", E, "W3", [to_splice("s1"), to_contact("x1", "1")], spec(0.5, "R"), ["seg_b1_s1", "seg_b1_x1"])),

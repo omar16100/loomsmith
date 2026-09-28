@@ -1,7 +1,7 @@
 import * as z from "zod";
-import { bbox_schema, id_schema, label_schema, length_schema, origin_schema, part_use_schema, text_schema } from "./primitives.ts";
+import { bbox_schema, datum_schema, id_schema, label_schema, length_estimate_schema, length_schema, origin_schema, part_use_schema, text_schema } from "./primitives.ts";
 
-export const current_schema_version = 1;
+export const current_schema_version = 2;
 
 export const harness_schema = z.strictObject({ id: id_schema, label: label_schema });
 
@@ -64,6 +64,20 @@ export const wire_spec_schema = z.strictObject({
   insulation: text_schema,
 });
 
+// One wire end: the datum its figure is given from, and the signed wire length from that datum to the cut end of the
+// conductor, slack at that end included. Positive into a housing from its back face; negative when the conductor
+// stops short of the datum (the mating face, a ring terminal on a stud centre). null is unknown.
+export const end_allowance_schema = z.strictObject({
+  datum: datum_schema.nullable(),
+  beyond_datum_mm: z.number().nullable(),
+});
+
+export const allowances_schema = z.strictObject({
+  end_a: end_allowance_schema,
+  end_b: end_allowance_schema,
+  service_loop_mm: z.number().nonnegative().nullable(),
+});
+
 export const wire_schema = z.strictObject({
   id: id_schema,
   harness_id: id_schema,
@@ -71,11 +85,7 @@ export const wire_schema = z.strictObject({
   ends: z.tuple([wire_end_schema, wire_end_schema]),
   spec: wire_spec_schema,
   route: z.array(id_schema).nullable(),
-  allowances: z.strictObject({
-    end_a_mm: z.number().nonnegative(),
-    end_b_mm: z.number().nonnegative(),
-    service_mm: z.number().nonnegative(),
-  }),
+  allowances: allowances_schema,
 });
 
 export const node_schema = z.strictObject({
@@ -91,6 +101,7 @@ export const segment_schema = z.strictObject({
   node_a: id_schema,
   node_b: id_schema,
   length: length_schema,
+  length_estimate: length_estimate_schema.nullable(),
 });
 
 export const mating_schema = z.strictObject({
@@ -194,6 +205,8 @@ export type Splice = z.infer<typeof splice_schema>;
 export type GroundPoint = z.infer<typeof ground_point_schema>;
 export type WireEnd = z.infer<typeof wire_end_schema>;
 export type WireSpec = z.infer<typeof wire_spec_schema>;
+export type EndAllowance = z.infer<typeof end_allowance_schema>;
+export type Allowances = z.infer<typeof allowances_schema>;
 export type Wire = z.infer<typeof wire_schema>;
 export type TopologyNode = z.infer<typeof node_schema>;
 export type Segment = z.infer<typeof segment_schema>;

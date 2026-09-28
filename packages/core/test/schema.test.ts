@@ -1,11 +1,12 @@
 import { describe, expect, it } from "vitest";
 import { batch_json_schema, document_json_schema } from "../src/schema/json_schema.ts";
-import { collection_names, collection_schemas, document_schema, wire_schema } from "../src/schema/document.ts";
+import { collection_names, collection_schemas, document_schema, segment_schema, wire_schema } from "../src/schema/document.ts";
+import { make_length } from "../src/model/make_length.ts";
 import { batch_schema } from "../src/schema/commands.ts";
 
 const minimal = {
   format: "loomsmith",
-  schema_version: 1,
+  schema_version: 2,
   document_id: "d1",
   revision: 0,
   applied_batch_ids: [],
@@ -22,7 +23,7 @@ const schematic_wire = {
   ends: [{ kind: "open" }, { kind: "open" }],
   spec: { cross_section_mm2: null, designation: null, base_colour: null, stripe_colours: [], insulation: null },
   route: null,
-  allowances: { end_a_mm: 0, end_b_mm: 0, service_mm: 0 },
+  allowances: { end_a: { datum: null, beyond_datum_mm: null }, end_b: { datum: null, beyond_datum_mm: null }, service_loop_mm: null },
 };
 
 describe("document schema", () => {
@@ -103,10 +104,33 @@ describe("document schema", () => {
 
   it("publishes JSON Schemas", async () => {
     await expect(JSON.stringify(document_json_schema(), null, 2) + "\n").toMatchFileSnapshot(
-      "../generated/loomsmith_document_v1.schema.json",
+      "../generated/loomsmith_document_v2.schema.json",
     );
     await expect(JSON.stringify(batch_json_schema(), null, 2) + "\n").toMatchFileSnapshot(
       "../generated/loomsmith_batch_v1.schema.json",
     );
+  });
+
+  it("accepts per-end allowances with signed beyond-datum lengths and rejects the v1 flat shape", () => {
+    expect(wire_schema.safeParse(schematic_wire).success).toBe(true);
+    const ring = { ...schematic_wire, allowances: { end_a: { datum: "ground_stud_centre", beyond_datum_mm: -8 }, end_b: { datum: "connector_back_face", beyond_datum_mm: 12 }, service_loop_mm: 0 } };
+    expect(wire_schema.safeParse(ring).success).toBe(true);
+    expect(wire_schema.safeParse({ ...schematic_wire, allowances: { end_a_mm: 0, end_b_mm: 0, service_mm: 0 } }).success).toBe(false);
+    expect(wire_schema.safeParse({ ...ring, allowances: { ...ring.allowances, service_loop_mm: -1 } }).success).toBe(false);
+    expect(wire_schema.safeParse({ ...ring, allowances: { ...ring.allowances, end_a: { datum: "somewhere", beyond_datum_mm: 0 } } }).success).toBe(false);
+  });
+
+  it("accepts asymmetric tolerance, datums and an estimate range; rejects the v1 length", () => {
+    const seg = {
+      id: "s1", harness_id: "h1", node_a: "n1", node_b: "n2",
+      length: make_length({ nominal_mm: 300, tol_plus_mm: 10, datum_a: "connector_back_face", datum_b: "breakout_centre" }),
+      length_estimate: { min_mm: 250, max_mm: 400, method: "body dimensions" },
+    };
+    expect(segment_schema.safeParse(seg).success).toBe(true);
+    expect(segment_schema.safeParse({ ...seg, length_estimate: null }).success).toBe(true);
+    expect(segment_schema.safeParse({ ...seg, length: { nominal_mm: 300, tol_mm: 5, datum: null } }).success).toBe(false);
+    expect(segment_schema.safeParse({ ...seg, length: { ...seg.length, datum_a: "somewhere" } }).success).toBe(false);
+    expect(segment_schema.safeParse({ ...seg, length: { ...seg.length, tol_minus_mm: -1 } }).success).toBe(false);
+    expect(segment_schema.safeParse({ ...seg, length_estimate: { min_mm: 250, max_mm: 400, method: "" } }).success).toBe(false);
   });
 });

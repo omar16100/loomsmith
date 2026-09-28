@@ -13,7 +13,7 @@ describe("wire list", () => {
     expect(rows[2]).toEqual({
       wire_id: "w1", harness_label: "ENGINE_SIDE", wire_label: "W1", from: "J1:1", to: "S1",
       cross_section_mm2: 0.5, designation: "0.5 mm2", colour: "R", route_status: "ok",
-      cut_length: { status: "known", nominal_mm: 460, tol_mm: 8, unknown_segment_ids: [] },
+      cut_length: { status: "known", nominal_mm: 460, tol_plus_mm: 8, tol_minus_mm: 1, unknown_segment_ids: [], unknown_allowances: [], datum_problems: [] },
     });
     expect(rows.find((row) => row.wire_label === "W5")?.colour).toBe("G-W");
     expect(rows.find((row) => row.wire_label === "W8")?.colour).toBe("UNKNOWN");

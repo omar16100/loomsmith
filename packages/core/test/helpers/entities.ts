@@ -1,8 +1,9 @@
 import { create_empty_document } from "../../src/model/empty_document.ts";
+import { make_length } from "../../src/model/make_length.ts";
 import type {
   Connector, Contact, GroundPoint, Harness, LoomDocument, Part, PartKind, Segment, Splice, TopologyNode, Wire, WireEnd, WireSpec,
 } from "../../src/schema/document.ts";
-import type { PartUse } from "../../src/schema/primitives.ts";
+import type { Datum, PartUse } from "../../src/schema/primitives.ts";
 
 export const unknown_part: PartUse = { part_id: null, identification: "unknown", compatibility: "unknown", procurement: "unknown" };
 
@@ -58,8 +59,12 @@ export function node(id: string, harness_id: string, kind: TopologyNode["kind"],
   return { id, harness_id, kind, ref_id };
 }
 
-export function segment(id: string, harness_id: string, node_a: string, node_b: string, nominal_mm: number | null, tol_mm: number | null = null): Segment {
-  return { id, harness_id, node_a, node_b, length: { nominal_mm, tol_mm, datum: null } };
+export function segment(
+  id: string, harness_id: string, node_a: string, node_b: string, nominal_mm: number | null,
+  tol_plus_mm: number | null = null, tol_minus_mm: number | null = 0, datums: [Datum | null, Datum | null] = [null, null],
+): Segment {
+  const length = make_length({ nominal_mm, tol_plus_mm, tol_minus_mm, datum_a: datums[0], datum_b: datums[1] });
+  return { id, harness_id, node_a, node_b, length, length_estimate: null };
 }
 
 export function spec(cross_section_mm2: number | null, base_colour: string | null, stripe_colours: string[] = []): WireSpec {
@@ -72,8 +77,24 @@ export function spec(cross_section_mm2: number | null, base_colour: string | nul
   };
 }
 
+// The datum a wire end's allowance is given from, by what the end is attached to.
+function end_datum(end: WireEnd): Datum | null {
+  switch (end.kind) {
+    case "contact":
+      return "connector_back_face";
+    case "splice":
+      return "splice_centre";
+    case "ground_point":
+      return "ground_stud_centre";
+    case "open":
+      return null;
+  }
+}
+
+// 20 mm of wire beyond the datum at each end (into the housing, slack included), no service loop.
 export function wire(id: string, harness_id: string, label: string, ends: [WireEnd, WireEnd], wire_spec: WireSpec, route: string[] | null): Wire {
-  return { id, harness_id, label, ends, spec: wire_spec, route, allowances: { end_a_mm: 20, end_b_mm: 20, service_mm: 0 } };
+  const allowances = { end_a: { datum: end_datum(ends[0]), beyond_datum_mm: 20 }, end_b: { datum: end_datum(ends[1]), beyond_datum_mm: 20 }, service_loop_mm: 0 };
+  return { id, harness_id, label, ends, spec: wire_spec, route, allowances };
 }
 
 export const to_contact = (connector_id: string, cavity_label: string): WireEnd => ({ kind: "contact", contact_id: `${connector_id}_k${cavity_label}` });
@@ -89,7 +110,7 @@ export function small_doc(): LoomDocument {
     connectors: [connector("j1", "h1", "J1", ["1", "2"]), connector("j2", "h1", "J2", ["1", "2"])],
     contacts: [contact("j1", "1"), contact("j2", "1")],
     nodes: [node("n_j1", "h1", "connector", "j1"), node("n_j2", "h1", "connector", "j2")],
-    segments: [segment("s1", "h1", "n_j1", "n_j2", 500, 5)],
+    segments: [segment("s1", "h1", "n_j1", "n_j2", 500, 5, 0, ["connector_back_face", "connector_back_face"])],
     wires: [wire("w1", "h1", "W1", [to_contact("j1", "1"), to_contact("j2", "1")], spec(0.5, "R"), ["s1"])],
   };
 }

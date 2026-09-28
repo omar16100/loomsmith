@@ -6,6 +6,8 @@ export * from "./schema/json_schema.ts";
 export * from "./schema/format_issues.ts";
 export * from "./model/canonical.ts";
 export * from "./model/empty_document.ts";
+export * from "./model/make_length.ts";
+export * from "./model/datums.ts";
 export * from "./migrate/load_document.ts";
 export * from "./model/doc_index.ts";
 export * from "./validate/issue.ts";

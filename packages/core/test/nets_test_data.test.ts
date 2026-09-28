@@ -54,7 +54,7 @@ describe("nets", () => {
         ends: [{ kind: "splice", splice_id: `sc${pad(i)}` }, { kind: "splice", splice_id: `sc${pad(i - 1)}` }],
         spec: { cross_section_mm2: null, designation: null, base_colour: null, stripe_colours: [], insulation: null },
         route: null,
-        allowances: { end_a_mm: 0, end_b_mm: 0, service_mm: 0 },
+        allowances: { end_a: { datum: null, beyond_datum_mm: null }, end_b: { datum: null, beyond_datum_mm: null }, service_loop_mm: null },
       });
     }
     const long_chain: LoomDocument = { ...small_doc(), wires };

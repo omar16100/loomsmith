@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { apply_batch, make_batch, type ApplyBatchResult } from "../src/commands/apply_batch.ts";
 import { cmd_delete, cmd_insert, cmd_update } from "../src/commands/builders.ts";
 import { create_memory_logger } from "../src/log.ts";
+import { make_length } from "../src/model/make_length.ts";
 import { to_canonical_file } from "../src/model/canonical.ts";
 import type { LoomDocument } from "../src/schema/document.ts";
 import { apply_ok, fixed_time as T } from "./helpers/apply.ts";
@@ -125,7 +126,7 @@ describe("apply_batch", () => {
     const forward = apply_batch(
       doc,
       make_batch(doc, [
-        cmd_update("segments", "s1", { length: { nominal_mm: 510, tol_mm: 5, datum: null } }),
+        cmd_update("segments", "s1", { length: make_length({ nominal_mm: 510, tol_plus_mm: 5 }) }),
         cmd_insert("harnesses", harness("h2", "SECOND")),
       ], "b1", T),
     );

@@ -21,7 +21,7 @@ describe("load_document", () => {
 
   it("rejects future, unsupported and malformed versions", () => {
     const raw = JSON.parse(to_canonical_file(small_doc()));
-    expect(error_code(load_document({ ...raw, schema_version: 2 }))).toBe("future_version");
+    expect(error_code(load_document({ ...raw, schema_version: 3 }))).toBe("future_version");
     expect(error_code(load_document({ ...raw, schema_version: 0 }))).toBe("unsupported_version");
     expect(error_code(load_document({ ...raw, schema_version: "1" }))).toBe("invalid_document");
   });

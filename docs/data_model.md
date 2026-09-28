@@ -21,7 +21,7 @@ A loomsmith document is a single JSON object:
 | Field | Type | Meaning |
 |---|---|---|
 | `format` | literal `"loomsmith"` | file format tag |
-| `schema_version` | literal `1` | current schema version (`current_schema_version`) |
+| `schema_version` | literal `2` | current schema version (`current_schema_version`) |
 | `document_id` | id | opaque, caller-supplied |
 | `revision` | non-negative integer | incremented by one on every accepted batch |
 | `applied_batch_ids` | array of id | batch ids already applied, for idempotency |
@@ -60,9 +60,10 @@ A loomsmith document is a single JSON object:
   (shared "project label" namespace); wire labels are unique per harness
   (`check_labels` in `structural.ts`).
 
-**Unit rules**: canonical units are `length_mm` (via the `length` object's `nominal_mm`/
-`tol_mm`) and `cross_section_mm2`. An unknown value is always `null`, never `0`
-(`length_schema`, `wire_spec_schema` in `document.ts`).
+**Unit rules**: canonical units are millimetres for lengths (`length.nominal_mm`, `tol_plus_mm`,
+`tol_minus_mm`, `length_estimate.min_mm`/`max_mm`, `beyond_datum_mm`, `service_loop_mm`) and
+`cross_section_mm2`. An unknown value is always `null`, never `0` (`length_schema`,
+`allowances_schema`, `wire_spec_schema`).
 
 ## 3. Entities
 
@@ -76,9 +77,9 @@ One row per collection, fields from `document.ts`.
 | `contacts` | `id`, `connector_id`, `cavity_id`, `contact_gender` (`male`\|`female`\|`null`), `terminal` (part use), `seal` (`{ part, quantity 1-4 }` or `null`), `max_wire_ends` (1-4) |
 | `splices` | `id`, `harness_id`, `label`, `part` (part use), `max_wire_ends` (2-32) |
 | `ground_points` | `id`, `harness_id`, `label` |
-| `wires` | `id`, `harness_id`, `label`, `ends` (tuple of 2 wire ends), `spec` (wire spec), `route` (array of segment id, or `null` if unrouted), `allowances` (`{ end_a_mm, end_b_mm, service_mm }`, each non-negative) |
+| `wires` | `id`, `harness_id`, `label`, `ends` (tuple of 2 wire ends), `spec` (wire spec), `route` (array of segment id, or `null` if unrouted), `allowances` (allowances object) |
 | `nodes` | `id`, `harness_id`, `kind` (`connector`\|`breakout`\|`clip`\|`grommet`\|`splice`\|`ground`), `ref_id` (id or `null`) |
-| `segments` | `id`, `harness_id`, `node_a`, `node_b`, `length` (length object) |
+| `segments` | `id`, `harness_id`, `node_a`, `node_b`, `length` (length object), `length_estimate` (estimate object or `null`) |
 | `matings` | `id`, `connector_a`, `connector_b`, `cavity_map` (array of `{ cavity_a, cavity_b }`, at least 1) |
 | `assets` | `id`, `sha256` (64 hex chars), `media_type`, `blob_ref` (`asset://...`, `synthetic://...` or a relative path only; no absolute POSIX, Windows or UNC path, no `?`/`#` query or fragment, and no `..` path segment at the start or after `/` or `\`, so `../x.pdf`, `pdfs/../../etc/passwd` and `asset://a/../b` are rejected), `title` |
 | `evidence` | `id`, `entity_id`, `field`, `origin` (`measured`\|`documented`\|`inferred`\|`assumed`), `value_json`, `source` (`{ asset_id, page_index, bbox }` or `null`), `note` |
@@ -87,7 +88,10 @@ One row per collection, fields from `document.ts`.
 
 Shared substructures (`primitives.ts`):
 - **part use**: `{ part_id (id or null), identification (identified\|candidate\|unknown), compatibility (compatible\|incompatible\|unknown), procurement (available\|unavailable\|reused\|unknown) }`.
-- **length**: `{ nominal_mm (positive or null), tol_mm (non-negative or null), datum (text or null) }`.
+- **length**: `{ nominal_mm (positive or null), tol_plus_mm, tol_minus_mm (non-negative or null), datum_a, datum_b (datum or null), note (text or null) }`. The tolerance is a build tolerance: the built segment lies in `[nominal - tol_minus_mm, nominal + tol_plus_mm]`. `datum_a`/`datum_b` are the measurement points at `node_a`/`node_b`. `make_length` (`model/make_length.ts`) defaults an omitted `tol_minus_mm` to `0` (never short); an explicit `null` stays unknown.
+- **datum**: `connector_back_face`, `connector_mating_face` (connector nodes), `breakout_centre`, `clip_centre`, `grommet_centre`, `splice_centre`, `ground_stud_centre` (the node kind named). No terminal tip: a datum does not name a contact, and terminals of one connector can sit at different depths. `model/datums.ts` holds `datum_node_kind` and the editor default `default_datum` per node kind.
+- **length estimate**: `{ min_mm, max_mm (positive), method (text, required) }`, a range guessed before measuring. Never used as a length; its evidence (origin `assumed`, with the source page) goes on field `length_estimate`.
+- **allowances**: `{ end_a, end_b, service_loop_mm }`; each end `{ datum (datum or null), beyond_datum_mm (signed number or null) }`: the wire length from that datum to the cut end of the conductor, slack at that end included (negative when the conductor stops short of the datum, e.g. the mating face or a ring terminal on a stud centre). `service_loop_mm` non-negative or null. Strip length is not an allowance: it is inside the cut length and belongs to terminal part data.
 - **wire end** (`wire_end_schema` in `document.ts`, a discriminated union on `kind`): `contact` (`contact_id`), `splice` (`splice_id`), `ground_point` (`ground_point_id`), `open` (no payload).
 - **wire spec**: `{ cross_section_mm2 (positive or null), designation (text or null), base_colour (string 1-16 or null), stripe_colours (up to 3), insulation (text or null) }`.
 
@@ -240,12 +244,19 @@ here is stored in the document.
   `missing_endpoint_node` (an end's connector/splice/ground_point has no topology node),
   `not_contiguous` (the listed segments do not chain from the start node to the end node),
   or `ok`.
-- **Length rules**: `route_length` sums segment `length.nominal_mm` and `length.tol_mm`
-  along an `ok` route; if any crossed segment has `nominal_mm: null` the result is
-  `status: "unknown"` with the list of `unknown_segment_ids`; a non-`ok` route is
-  `status: "unavailable"`. `cut_length` adds `allowances.end_a_mm + end_b_mm + service_mm`
-  to a `known` route length; otherwise it passes the route length through unchanged.
-  Lengths are rounded to 3 decimal places (`round_mm`, i.e. micrometre precision).
+- **Length rules**: `route_length` sums segment `length.nominal_mm` and, separately,
+  `tol_plus_mm` and `tol_minus_mm` along an `ok` route; a band is `null` if any crossed
+  segment's band on that side is `null`. Any crossed `nominal_mm: null` gives
+  `status: "unknown"` with `unknown_segment_ids`; a non-`ok` route is `status: "unavailable"`.
+  `route_end_datums` reads the datum at each wire end from the end segment, in whichever
+  direction it is stored. `check_route_datums` checks the whole route: every crossed
+  segment end has a datum, consecutive segments meet at the same point, and each wire end's
+  allowance datum equals the route's datum there; a same-node wire (`route: []`, length 0)
+  needs both allowance datums equal and on that node's kind. `cut_length` returns a
+  `CutLengthValue` (adds `unknown_allowances` and `datum_problems`): route length + both
+  ends' `beyond_datum_mm` + `service_loop_mm`, with the route's bands unchanged. It is known
+  only if the route is known, every allowance is known and `check_route_datums` finds
+  nothing; datums are never converted. Lengths are rounded to 3 decimal places (`round_mm`).
 - **Nets** (`derive_nets`, `/Users/macmini/projects/loomsmith/packages/core/src/derive/nets.ts`):
   union-find over wire endpoints (`contact:<id>`, `splice:<id>`, `ground_point:<id>`; `open`
   ends contribute no key) plus the cavity pairs of every active mating. `active_matings`

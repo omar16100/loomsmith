@@ -328,7 +328,7 @@
       "note": "synthetic tape measurement",
       "origin": "measured",
       "source": null,
-      "value_json": "{\"datum\":null,\"nominal_mm\":300,\"tol_mm\":5}"
+      "value_json": "{\"datum_a\":\"connector_back_face\",\"datum_b\":\"breakout_centre\",\"nominal_mm\":300,\"note\":null,\"tol_minus_mm\":0,\"tol_plus_mm\":5}"
     },
     {
       "entity_id": "w7",
@@ -481,16 +481,20 @@
     }
   ],
   "revision": 3,
-  "schema_version": 1,
+  "schema_version": 2,
   "segments": [
     {
       "harness_id": "h_engine",
       "id": "seg_b1_g1",
       "length": {
-        "datum": null,
+        "datum_a": "breakout_centre",
+        "datum_b": "ground_stud_centre",
         "nominal_mm": 80,
-        "tol_mm": 2
+        "note": null,
+        "tol_minus_mm": 0,
+        "tol_plus_mm": 2
       },
+      "length_estimate": null,
       "node_a": "n_b1",
       "node_b": "n_g1"
     },
@@ -498,10 +502,14 @@
       "harness_id": "h_engine",
       "id": "seg_b1_s1",
       "length": {
-        "datum": null,
+        "datum_a": "breakout_centre",
+        "datum_b": "splice_centre",
         "nominal_mm": 120,
-        "tol_mm": 3
+        "note": null,
+        "tol_minus_mm": 1,
+        "tol_plus_mm": 3
       },
+      "length_estimate": null,
       "node_a": "n_b1",
       "node_b": "n_s1"
     },
@@ -509,10 +517,14 @@
       "harness_id": "h_engine",
       "id": "seg_b1_x1",
       "length": {
-        "datum": null,
+        "datum_a": "breakout_centre",
+        "datum_b": "connector_back_face",
         "nominal_mm": null,
-        "tol_mm": null
+        "note": null,
+        "tol_minus_mm": 0,
+        "tol_plus_mm": null
       },
+      "length_estimate": null,
       "node_a": "n_b1",
       "node_b": "n_x1"
     },
@@ -520,10 +532,14 @@
       "harness_id": "h_engine",
       "id": "seg_j1_b1",
       "length": {
-        "datum": null,
+        "datum_a": "connector_back_face",
+        "datum_b": "breakout_centre",
         "nominal_mm": 300,
-        "tol_mm": 5
+        "note": null,
+        "tol_minus_mm": 0,
+        "tol_plus_mm": 5
       },
+      "length_estimate": null,
       "node_a": "n_j1",
       "node_b": "n_b1"
     },
@@ -531,10 +547,14 @@
       "harness_id": "h_engine",
       "id": "seg_s1_j2",
       "length": {
-        "datum": null,
+        "datum_a": "splice_centre",
+        "datum_b": "connector_back_face",
         "nominal_mm": 450,
-        "tol_mm": 5
+        "note": null,
+        "tol_minus_mm": 0,
+        "tol_plus_mm": 5
       },
+      "length_estimate": null,
       "node_a": "n_s1",
       "node_b": "n_j2"
     }
@@ -568,9 +588,15 @@
   "wires": [
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "splice_centre"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {
@@ -599,9 +625,15 @@
     },
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "splice_centre"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {
@@ -629,9 +661,15 @@
     },
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "splice_centre"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {
@@ -660,9 +698,15 @@
     },
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "ground_stud_centre"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {
@@ -691,9 +735,15 @@
     },
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {
@@ -724,9 +774,15 @@
     },
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {
@@ -758,9 +814,15 @@
     },
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {
@@ -786,9 +848,15 @@
     },
     {
       "allowances": {
-        "end_a_mm": 20,
-        "end_b_mm": 20,
-        "service_mm": 0
+        "end_a": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "end_b": {
+          "beyond_datum_mm": 20,
+          "datum": "connector_back_face"
+        },
+        "service_loop_mm": 0
       },
       "ends": [
         {

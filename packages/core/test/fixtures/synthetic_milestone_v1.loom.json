@@ -1,0 +1,816 @@
+{
+  "applied_batch_ids": [
+    "b_build",
+    "b_review",
+    "b_resize_w2"
+  ],
+  "assets": [
+    {
+      "blob_ref": "synthetic://fixture/diagram.pdf",
+      "id": "a_diagram",
+      "media_type": "application/pdf",
+      "sha256": "2482dd3f269bca15de96089d4caa5fccb1675ff10d978cf9acfb24f17bc2af32",
+      "title": "synthetic diagram placeholder (no real content)"
+    }
+  ],
+  "connectors": [
+    {
+      "cavities": [
+        {
+          "id": "j1_c1",
+          "label": "1"
+        },
+        {
+          "id": "j1_c2",
+          "label": "2"
+        },
+        {
+          "id": "j1_c3",
+          "label": "3"
+        }
+      ],
+      "face_view": "wire_entry",
+      "harness_id": "h_engine",
+      "housing": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_housing_3",
+        "procurement": "available"
+      },
+      "housing_gender": null,
+      "id": "j1",
+      "label": "J1",
+      "safety_class": null
+    },
+    {
+      "cavities": [
+        {
+          "id": "j2_c1",
+          "label": "1"
+        },
+        {
+          "id": "j2_c2",
+          "label": "2"
+        }
+      ],
+      "face_view": "wire_entry",
+      "harness_id": "h_engine",
+      "housing": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_housing_2",
+        "procurement": "available"
+      },
+      "housing_gender": null,
+      "id": "j2",
+      "label": "J2",
+      "safety_class": null
+    },
+    {
+      "cavities": [
+        {
+          "id": "j3_c1",
+          "label": "1"
+        },
+        {
+          "id": "j3_c2",
+          "label": "2"
+        }
+      ],
+      "face_view": "wire_entry",
+      "harness_id": "h_body",
+      "housing": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_housing_2",
+        "procurement": "available"
+      },
+      "housing_gender": null,
+      "id": "j3",
+      "label": "J3",
+      "safety_class": "srs"
+    },
+    {
+      "cavities": [
+        {
+          "id": "x1_c1",
+          "label": "1"
+        },
+        {
+          "id": "x1_c2",
+          "label": "2"
+        }
+      ],
+      "face_view": "wire_entry",
+      "harness_id": "h_engine",
+      "housing": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_housing_2",
+        "procurement": "available"
+      },
+      "housing_gender": "male",
+      "id": "x1",
+      "label": "X1",
+      "safety_class": null
+    },
+    {
+      "cavities": [
+        {
+          "id": "x2_c1",
+          "label": "1"
+        },
+        {
+          "id": "x2_c2",
+          "label": "2"
+        }
+      ],
+      "face_view": "wire_entry",
+      "harness_id": "h_body",
+      "housing": {
+        "compatibility": "unknown",
+        "identification": "unknown",
+        "part_id": null,
+        "procurement": "unknown"
+      },
+      "housing_gender": "female",
+      "id": "x2",
+      "label": "X2",
+      "safety_class": null
+    }
+  ],
+  "contacts": [
+    {
+      "cavity_id": "j1_c1",
+      "connector_id": "j1",
+      "contact_gender": null,
+      "id": "j1_k1",
+      "max_wire_ends": 1,
+      "seal": {
+        "part": {
+          "compatibility": "compatible",
+          "identification": "identified",
+          "part_id": "p_seal",
+          "procurement": "available"
+        },
+        "quantity": 1
+      },
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "j1_c2",
+      "connector_id": "j1",
+      "contact_gender": null,
+      "id": "j1_k2",
+      "max_wire_ends": 1,
+      "seal": {
+        "part": {
+          "compatibility": "compatible",
+          "identification": "identified",
+          "part_id": "p_seal",
+          "procurement": "available"
+        },
+        "quantity": 1
+      },
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "j1_c3",
+      "connector_id": "j1",
+      "contact_gender": null,
+      "id": "j1_k3",
+      "max_wire_ends": 2,
+      "seal": {
+        "part": {
+          "compatibility": "compatible",
+          "identification": "identified",
+          "part_id": "p_seal",
+          "procurement": "available"
+        },
+        "quantity": 1
+      },
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "j2_c1",
+      "connector_id": "j2",
+      "contact_gender": null,
+      "id": "j2_k1",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "j2_c2",
+      "connector_id": "j2",
+      "contact_gender": null,
+      "id": "j2_k2",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "j3_c1",
+      "connector_id": "j3",
+      "contact_gender": null,
+      "id": "j3_k1",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "j3_c2",
+      "connector_id": "j3",
+      "contact_gender": null,
+      "id": "j3_k2",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "x1_c1",
+      "connector_id": "x1",
+      "contact_gender": null,
+      "id": "x1_k1",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "x1_c2",
+      "connector_id": "x1",
+      "contact_gender": null,
+      "id": "x1_k2",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_terminal",
+        "procurement": "available"
+      }
+    },
+    {
+      "cavity_id": "x2_c1",
+      "connector_id": "x2",
+      "contact_gender": null,
+      "id": "x2_k1",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "unknown",
+        "identification": "candidate",
+        "part_id": "p_terminal",
+        "procurement": "unknown"
+      }
+    },
+    {
+      "cavity_id": "x2_c2",
+      "connector_id": "x2",
+      "contact_gender": null,
+      "id": "x2_k2",
+      "max_wire_ends": 1,
+      "seal": null,
+      "terminal": {
+        "compatibility": "unknown",
+        "identification": "candidate",
+        "part_id": "p_terminal",
+        "procurement": "unknown"
+      }
+    }
+  ],
+  "document_id": "doc_synthetic_milestone",
+  "evidence": [
+    {
+      "entity_id": "seg_j1_b1",
+      "field": "length",
+      "id": "e_seg_j1_b1_length",
+      "note": "synthetic tape measurement",
+      "origin": "measured",
+      "source": null,
+      "value_json": "{\"datum\":null,\"nominal_mm\":300,\"tol_mm\":5}"
+    },
+    {
+      "entity_id": "w7",
+      "field": "ends",
+      "id": "e_w7_ends",
+      "note": "synthetic example of an LLM-inferred connection",
+      "origin": "inferred",
+      "source": {
+        "asset_id": "a_diagram",
+        "bbox": [
+          100,
+          200,
+          300,
+          220
+        ],
+        "page_index": 0
+      },
+      "value_json": "[{\"contact_id\":\"x2_k1\",\"kind\":\"contact\"},{\"contact_id\":\"j3_k1\",\"kind\":\"contact\"}]"
+    }
+  ],
+  "format": "loomsmith",
+  "ground_points": [
+    {
+      "harness_id": "h_engine",
+      "id": "g1",
+      "label": "G1"
+    }
+  ],
+  "harnesses": [
+    {
+      "id": "h_body",
+      "label": "BODY_SIDE"
+    },
+    {
+      "id": "h_engine",
+      "label": "ENGINE_SIDE"
+    }
+  ],
+  "matings": [
+    {
+      "cavity_map": [
+        {
+          "cavity_a": "x1_c1",
+          "cavity_b": "x2_c1"
+        },
+        {
+          "cavity_a": "x1_c2",
+          "cavity_b": "x2_c2"
+        }
+      ],
+      "connector_a": "x1",
+      "connector_b": "x2",
+      "id": "m_x1_x2"
+    }
+  ],
+  "nodes": [
+    {
+      "harness_id": "h_engine",
+      "id": "n_b1",
+      "kind": "breakout",
+      "ref_id": null
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "n_g1",
+      "kind": "ground",
+      "ref_id": "g1"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "n_j1",
+      "kind": "connector",
+      "ref_id": "j1"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "n_j2",
+      "kind": "connector",
+      "ref_id": "j2"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "n_s1",
+      "kind": "splice",
+      "ref_id": "s1"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "n_x1",
+      "kind": "connector",
+      "ref_id": "x1"
+    }
+  ],
+  "parts": [
+    {
+      "description": "2-way housing (synthetic)",
+      "id": "p_housing_2",
+      "kind": "housing",
+      "manufacturer": "SYNTHETIC",
+      "part_number": "SYN-H2"
+    },
+    {
+      "description": "3-way housing (synthetic)",
+      "id": "p_housing_3",
+      "kind": "housing",
+      "manufacturer": "SYNTHETIC",
+      "part_number": "SYN-H3"
+    },
+    {
+      "description": "seal (synthetic)",
+      "id": "p_seal",
+      "kind": "seal",
+      "manufacturer": "SYNTHETIC",
+      "part_number": "SYN-S1"
+    },
+    {
+      "description": "splice crimp (synthetic)",
+      "id": "p_splice",
+      "kind": "splice",
+      "manufacturer": "SYNTHETIC",
+      "part_number": "SYN-SP1"
+    },
+    {
+      "description": "terminal 0.3-0.85 mm2 (synthetic)",
+      "id": "p_terminal",
+      "kind": "terminal",
+      "manufacturer": "SYNTHETIC",
+      "part_number": "SYN-T1"
+    }
+  ],
+  "project": {
+    "label": "SYNTHETIC MILESTONE (not a real vehicle)"
+  },
+  "reviews": [
+    {
+      "entity_id": "w1",
+      "field": "spec",
+      "id": "r_w1_spec",
+      "reviewed_value_json": "{\"base_colour\":\"R\",\"cross_section_mm2\":0.5,\"designation\":\"0.5 mm2\",\"insulation\":null,\"stripe_colours\":[]}",
+      "revision": 1,
+      "status": "approved"
+    },
+    {
+      "entity_id": "w2",
+      "field": "spec",
+      "id": "r_w2_spec",
+      "reviewed_value_json": "{\"base_colour\":\"R\",\"cross_section_mm2\":0.5,\"designation\":\"0.5 mm2\",\"insulation\":null,\"stripe_colours\":[]}",
+      "revision": 1,
+      "status": "approved"
+    }
+  ],
+  "revision": 3,
+  "schema_version": 1,
+  "segments": [
+    {
+      "harness_id": "h_engine",
+      "id": "seg_b1_g1",
+      "length": {
+        "datum": null,
+        "nominal_mm": 80,
+        "tol_mm": 2
+      },
+      "node_a": "n_b1",
+      "node_b": "n_g1"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "seg_b1_s1",
+      "length": {
+        "datum": null,
+        "nominal_mm": 120,
+        "tol_mm": 3
+      },
+      "node_a": "n_b1",
+      "node_b": "n_s1"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "seg_b1_x1",
+      "length": {
+        "datum": null,
+        "nominal_mm": null,
+        "tol_mm": null
+      },
+      "node_a": "n_b1",
+      "node_b": "n_x1"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "seg_j1_b1",
+      "length": {
+        "datum": null,
+        "nominal_mm": 300,
+        "tol_mm": 5
+      },
+      "node_a": "n_j1",
+      "node_b": "n_b1"
+    },
+    {
+      "harness_id": "h_engine",
+      "id": "seg_s1_j2",
+      "length": {
+        "datum": null,
+        "nominal_mm": 450,
+        "tol_mm": 5
+      },
+      "node_a": "n_s1",
+      "node_b": "n_j2"
+    }
+  ],
+  "splices": [
+    {
+      "harness_id": "h_engine",
+      "id": "s1",
+      "label": "S1",
+      "max_wire_ends": 4,
+      "part": {
+        "compatibility": "compatible",
+        "identification": "identified",
+        "part_id": "p_splice",
+        "procurement": "available"
+      }
+    }
+  ],
+  "view_positions": [
+    {
+      "id": "n_b1",
+      "x": 300,
+      "y": 0
+    },
+    {
+      "id": "n_j1",
+      "x": 0,
+      "y": 0
+    }
+  ],
+  "wires": [
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "contact_id": "j1_k1",
+          "kind": "contact"
+        },
+        {
+          "kind": "splice",
+          "splice_id": "s1"
+        }
+      ],
+      "harness_id": "h_engine",
+      "id": "w1",
+      "label": "W1",
+      "route": [
+        "seg_j1_b1",
+        "seg_b1_s1"
+      ],
+      "spec": {
+        "base_colour": "R",
+        "cross_section_mm2": 0.5,
+        "designation": "0.5 mm2",
+        "insulation": null,
+        "stripe_colours": []
+      }
+    },
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "kind": "splice",
+          "splice_id": "s1"
+        },
+        {
+          "contact_id": "j2_k1",
+          "kind": "contact"
+        }
+      ],
+      "harness_id": "h_engine",
+      "id": "w2",
+      "label": "W2",
+      "route": [
+        "seg_s1_j2"
+      ],
+      "spec": {
+        "base_colour": "R",
+        "cross_section_mm2": 0.85,
+        "designation": "0.85 mm2",
+        "insulation": null,
+        "stripe_colours": []
+      }
+    },
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "kind": "splice",
+          "splice_id": "s1"
+        },
+        {
+          "contact_id": "x1_k1",
+          "kind": "contact"
+        }
+      ],
+      "harness_id": "h_engine",
+      "id": "w3",
+      "label": "W3",
+      "route": [
+        "seg_b1_s1",
+        "seg_b1_x1"
+      ],
+      "spec": {
+        "base_colour": "R",
+        "cross_section_mm2": 0.5,
+        "designation": "0.5 mm2",
+        "insulation": null,
+        "stripe_colours": []
+      }
+    },
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "contact_id": "j1_k2",
+          "kind": "contact"
+        },
+        {
+          "ground_point_id": "g1",
+          "kind": "ground_point"
+        }
+      ],
+      "harness_id": "h_engine",
+      "id": "w4",
+      "label": "W4",
+      "route": [
+        "seg_j1_b1",
+        "seg_b1_g1"
+      ],
+      "spec": {
+        "base_colour": "B",
+        "cross_section_mm2": 0.85,
+        "designation": "0.85 mm2",
+        "insulation": null,
+        "stripe_colours": []
+      }
+    },
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "contact_id": "j1_k3",
+          "kind": "contact"
+        },
+        {
+          "contact_id": "x1_k2",
+          "kind": "contact"
+        }
+      ],
+      "harness_id": "h_engine",
+      "id": "w5",
+      "label": "W5",
+      "route": [
+        "seg_j1_b1",
+        "seg_b1_x1"
+      ],
+      "spec": {
+        "base_colour": "G",
+        "cross_section_mm2": 0.5,
+        "designation": "0.5 mm2",
+        "insulation": null,
+        "stripe_colours": [
+          "W"
+        ]
+      }
+    },
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "contact_id": "j1_k3",
+          "kind": "contact"
+        },
+        {
+          "contact_id": "j2_k2",
+          "kind": "contact"
+        }
+      ],
+      "harness_id": "h_engine",
+      "id": "w6",
+      "label": "W6",
+      "route": [
+        "seg_j1_b1",
+        "seg_b1_s1",
+        "seg_s1_j2"
+      ],
+      "spec": {
+        "base_colour": "G",
+        "cross_section_mm2": 0.5,
+        "designation": "0.5 mm2",
+        "insulation": null,
+        "stripe_colours": [
+          "W"
+        ]
+      }
+    },
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "contact_id": "x2_k1",
+          "kind": "contact"
+        },
+        {
+          "contact_id": "j3_k1",
+          "kind": "contact"
+        }
+      ],
+      "harness_id": "h_body",
+      "id": "w7",
+      "label": "W7",
+      "route": null,
+      "spec": {
+        "base_colour": "R",
+        "cross_section_mm2": 0.5,
+        "designation": "0.5 mm2",
+        "insulation": null,
+        "stripe_colours": []
+      }
+    },
+    {
+      "allowances": {
+        "end_a_mm": 20,
+        "end_b_mm": 20,
+        "service_mm": 0
+      },
+      "ends": [
+        {
+          "contact_id": "x2_k2",
+          "kind": "contact"
+        },
+        {
+          "contact_id": "j3_k2",
+          "kind": "contact"
+        }
+      ],
+      "harness_id": "h_body",
+      "id": "w8",
+      "label": "W8",
+      "route": null,
+      "spec": {
+        "base_colour": null,
+        "cross_section_mm2": null,
+        "designation": null,
+        "insulation": null,
+        "stripe_colours": []
+      }
+    }
+  ]
+}

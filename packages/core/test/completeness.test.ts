@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { cmd_insert, cmd_update } from "../src/commands/builders.ts";
 import { build_index } from "../src/model/doc_index.ts";
+import { make_length } from "../src/model/make_length.ts";
 import { validate_completeness } from "../src/validate/completeness.ts";
 import { evidence_state, make_review, review_state } from "../src/validate/review_state.ts";
 import { is_release_ready, validate } from "../src/validate/validate.ts";
@@ -121,7 +122,7 @@ describe("completeness validation", () => {
     const measured = doc.evidence.find((e) => e.id === "e_seg_j1_b1_length");
     if (!measured) throw new Error("fixture evidence missing");
     expect(evidence_state(build_index(doc), measured)).toBe("current");
-    const remeasured = apply_ok(doc, [cmd_update("segments", "seg_j1_b1", { length: { nominal_mm: 310, tol_mm: 5, datum: null } })], "b_remeasure");
+    const remeasured = apply_ok(doc, [cmd_update("segments", "seg_j1_b1", { length: make_length({ nominal_mm: 310, tol_plus_mm: 5, datum_a: "connector_back_face", datum_b: "breakout_centre" }) })], "b_remeasure");
     expect(validate_completeness(remeasured).map((issue) => `${issue.code}:${issue.entity_id}`)).toContain("W_EVIDENCE_STALE:seg_j1_b1");
   });
 });
