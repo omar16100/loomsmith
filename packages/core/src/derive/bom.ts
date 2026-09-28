@@ -68,8 +68,11 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
       category: "wire", part_id: null, part_number: null, description, quantity: null, known_quantity: 0, unit: "mm", unknown_quantity: 0, identification: "n/a",
     };
     const length = cut_length(index, w);
-    if (length.status === "known" && length.nominal_mm !== null) line.known_quantity = round_mm(line.known_quantity + length.nominal_mm);
-    else line.unknown_quantity += 1;
+    // A cut length of 0 or less is a data error (M_CUT_LENGTH_NOT_POSITIVE), never a quantity: it counts as
+    // unknown here so the line's quantity stays null instead of showing a negative or zero total.
+    if (length.status === "known" && length.nominal_mm !== null && length.nominal_mm > 0) {
+      line.known_quantity = round_mm(line.known_quantity + length.nominal_mm);
+    } else line.unknown_quantity += 1;
     line.quantity = line.unknown_quantity > 0 ? null : line.known_quantity;
     lines.set(key, line);
   }

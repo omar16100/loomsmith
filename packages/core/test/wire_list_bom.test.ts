@@ -82,4 +82,10 @@ describe("bill of materials", () => {
       derive_bom(reversed).filter((l) => l.category === "wire").map(key),
     );
   });
+
+  it("never counts a cut length of 0 or less as wire", () => {
+    const base = small_doc();
+    const short = { ...base, wires: base.wires.map((w) => ({ ...w, allowances: { ...w.allowances, end_a: { ...w.allowances.end_a, beyond_datum_mm: -600 } } })) };
+    expect(derive_bom(short).find((line) => line.category === "wire")).toMatchObject({ quantity: null, known_quantity: 0, unknown_quantity: 1 });
+  });
 });
