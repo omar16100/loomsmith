@@ -193,6 +193,8 @@ Defined in `/Users/macmini/projects/loomsmith/packages/core/src/schema/commands.
   batch is accepted only if it introduces no new or worsened issue and strictly reduces the
   total issue count.
 
+**Format contract**: `command_schema_version` versions the batch envelope. Batches and inverse batches are built against the current document format; callers discard pending batches and undo stacks when a document is migrated. Entity payloads are validated against the current schema (an old-shaped segment or wire is `invalid_entity`); evidence `value_json` is an opaque string, so an insert carrying an old-format value is accepted and is simply stale.
+
 ## 6. Validation codes
 
 From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts` (level
@@ -217,6 +219,8 @@ From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts
 | `S_NODE_KIND` | a node's `kind` and `ref_id` disagree: `connector`/`splice`/`ground` nodes need a `ref_id` of the matching kind; other kinds must not have one |
 | `S_NODE_DUPLICATE_REF` | more than one node refers to the same `ref_id` |
 | `S_SEGMENT_LOOP` | a segment's `node_a` and `node_b` are the same node |
+| `S_DATUM_NODE_KIND` | a segment's `datum_a`/`datum_b` is not a point on the kind of node at that end (`datum_node_kind` in `model/datums.ts`); a batch that changes a node's kind must fix the datums in the same batch |
+| `S_LENGTH_ESTIMATE_RANGE` | a segment's `length_estimate.min_mm` is greater than its `max_mm` |
 | `S_MATING_INVALID` | a mating is invalid: a connector mated to itself, a mapped cavity that does not exist on its connector, a cavity mapped twice, or a connector that appears in more than one mating |
 | `S_FIELD_UNKNOWN` | evidence or a review names a field that is not a top-level field of its entity |
 | `S_REVIEW_FUTURE_REVISION` | a review's `revision` is ahead of the document's current `revision` (a review can only be recorded at or before the revision it approves) |

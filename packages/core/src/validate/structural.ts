@@ -1,4 +1,5 @@
 import { compare_ids } from "../model/canonical.ts";
+import { datum_node_kind } from "../model/datums.ts";
 import { build_index, has_field, push_to, type DocIndex } from "../model/doc_index.ts";
 import type { LoomDocument, PartKind, WireEnd } from "../schema/document.ts";
 import type { PartUse } from "../schema/primitives.ts";
@@ -174,8 +175,17 @@ function check_topology(doc: LoomDocument, index: DocIndex, emit: Emit): void {
       const found = index.nodes.get(s[side]);
       if (!found) emit("S_REF_MISSING", `node ${s[side]} not found`, entity_path("segments", s.id, side), s.id, "join existing nodes");
       else if (found.harness_id !== s.harness_id) emit("S_HARNESS_MISMATCH", `node ${found.id} is in harness ${found.harness_id}`, entity_path("segments", s.id, side), s.id, "join nodes of the segment's harness");
+      const datum_field = side === "node_a" ? "datum_a" : "datum_b";
+      const datum = s.length[datum_field];
+      if (found && datum !== null && datum_node_kind[datum] !== found.kind) {
+        emit("S_DATUM_NODE_KIND", `${datum_field} ${datum} is not a point on ${found.kind} node ${found.id}`, entity_path("segments", s.id, "length", datum_field), s.id, `measure ${side} to a ${found.kind} datum`);
+      }
     }
     if (s.node_a === s.node_b) emit("S_SEGMENT_LOOP", "segment starts and ends at the same node", entity_path("segments", s.id), s.id, "a segment joins two different nodes");
+    const estimate = s.length_estimate;
+    if (estimate !== null && estimate.min_mm > estimate.max_mm) {
+      emit("S_LENGTH_ESTIMATE_RANGE", `estimate min ${estimate.min_mm} mm exceeds max ${estimate.max_mm} mm`, entity_path("segments", s.id, "length_estimate"), s.id, "correct the estimate bounds");
+    }
   }
 }
 

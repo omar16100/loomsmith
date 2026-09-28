@@ -191,4 +191,20 @@ describe("validate_structure", () => {
     expect(find(bad, "S_REF_MISSING")).toContainEqual(expect.objectContaining({ path: "wires/w4/route/0" }));
     expect(find(bad, "S_HARNESS_MISMATCH")).toContainEqual(expect.objectContaining({ path: "wires/w4/route/1" }));
   });
+
+  it("requires each segment datum to be a point on the node it measures to", () => {
+    const base = small_doc();
+    const seg = base.segments[0]!;
+    const doc = { ...base, segments: [{ ...seg, length: { ...seg.length, datum_a: "breakout_centre" as const } }] };
+    expect(validate_structure(doc).map((issue) => `${issue.code}:${issue.path}`)).toEqual(["S_DATUM_NODE_KIND:segments/s1/length/datum_a"]);
+  });
+
+  it("rejects an estimate whose min exceeds its max and accepts a single-value range", () => {
+    const base = small_doc();
+    const with_estimate = (min_mm: number, max_mm: number): LoomDocument => ({
+      ...base, segments: [{ ...base.segments[0]!, length_estimate: { min_mm, max_mm, method: "synthetic" } }],
+    });
+    expect(validate_structure(with_estimate(600, 400)).map((issue) => `${issue.code}:${issue.path}`)).toEqual(["S_LENGTH_ESTIMATE_RANGE:segments/s1/length_estimate"]);
+    expect(validate_structure(with_estimate(500, 500))).toEqual([]);
+  });
 });
