@@ -2,8 +2,9 @@ import { null_logger, type Logger } from "../log.ts";
 import { canonicalize_document } from "../model/canonical.ts";
 import { format_issues } from "../schema/format_issues.ts";
 import { current_schema_version, document_schema, type LoomDocument } from "../schema/document.ts";
+import { migrate_v1_to_v2, type MigrationResult } from "./v1_to_v2.ts";
 
-export type LoadErrorCode = "not_object" | "wrong_format" | "future_version" | "unsupported_version" | "invalid_document";
+export type LoadErrorCode = "not_object" | "wrong_format" | "future_version" | "unsupported_version" | "migration_failed" | "invalid_document";
 export interface LoadError {
   code: LoadErrorCode;
   message: string;
@@ -13,8 +14,8 @@ export type LoadResult = { ok: true; doc: LoomDocument } | { ok: false; error: L
 
 type RawDocument = Record<string, unknown>;
 
-// migrations[i] upgrades schema_version i + 1 to i + 2. Empty while only version 1 exists.
-const migrations: ReadonlyArray<(raw: RawDocument) => RawDocument> = [];
+// migrations[i] upgrades schema_version i + 1 to i + 2, or refuses with the paths it cannot migrate.
+const migrations: ReadonlyArray<(raw: RawDocument) => MigrationResult> = [migrate_v1_to_v2];
 
 function fail(log: Logger, code: LoadErrorCode, message: string, details: string[] = []): LoadResult {
   log.warn("document rejected", { code, message, detail_count: details.length });
@@ -34,7 +35,9 @@ export function load_document(raw: unknown, log: Logger = null_logger): LoadResu
   for (let from = version; from < current_schema_version; from += 1) {
     const step = migrations[from - 1];
     if (!step) return fail(log, "unsupported_version", `no migration from schema_version ${from}`);
-    record = step(record);
+    const migrated = step(record);
+    if (!migrated.ok) return fail(log, "migration_failed", `schema_version ${from} document cannot be migrated to ${from + 1}`, migrated.details);
+    record = migrated.raw;
     log.info("document migrated", { from, to: from + 1 });
   }
   const parsed = document_schema.safeParse(record);

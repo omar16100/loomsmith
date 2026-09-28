@@ -65,6 +65,20 @@ A loomsmith document is a single JSON object:
 `cross_section_mm2`. An unknown value is always `null`, never `0` (`length_schema`,
 `allowances_schema`, `wire_spec_schema`).
 
+**Migrations** (`migrate/load_document.ts`; one file per step, `migrate/v1_to_v2.ts`): an older
+`schema_version` is upgraded step by step before schema validation; a newer one is rejected
+(`future_version`); a step that cannot migrate fails with `migration_failed` and the paths.
+Version 1 to 2 maps value for value and invents nothing: `tol_mm` becomes equal `tol_plus_mm` and
+`tol_minus_mm`; the free-text `datum` moves to `note`, `datum_a`/`datum_b` are `null`;
+`allowances.end_a_mm`/`end_b_mm` become that end's `beyond_datum_mm` with `datum: null`;
+`service_mm` becomes `service_loop_mm`; `length_estimate` is `null`. Migrated cut lengths are
+therefore unknown until the datums are recorded, then exactly what version 1 computed. Each
+rewritten value must match the frozen version 1 shape exactly (no extra, missing or
+null-where-required keys); nothing is repaired. Evidence and review value JSON is translated only
+when it is exactly the canonical JSON of a valid version 1 value, and every evidence row and
+review must keep its current or stale state (targets resolved like `build_index`); otherwise the
+load fails.
+
 ## 3. Entities
 
 One row per collection, fields from `document.ts`.
