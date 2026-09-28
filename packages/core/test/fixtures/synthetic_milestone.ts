@@ -13,9 +13,14 @@ import {
 // sha256 of the text "loomsmith synthetic fixture asset"; the asset itself does not exist.
 export const synthetic_asset_sha256 = "2482dd3f269bca15de96089d4caa5fccb1675ff10d978cf9acfb24f17bc2af32";
 
+// sha256 of the text "loomsmith synthetic photo asset"; the photo itself does not exist.
+export const synthetic_photo_sha256 = "660550cd0c2d9364fa5dbb5eb8f493d9acb8641b58063a93a680145cde064a84";
+
 // Synthetic, not a real vehicle. Covers: splice, repeated colours, unmeasured segment, unknown wire spec,
 // double-wire termination (J1:3), base/stripe colours, terminal/seal quantities, a mating across two
-// harnesses, schematic-only wires, an SRS connector, inferred evidence and a stale approval.
+// harnesses, schematic-only wires, an SRS connector, inferred evidence and a stale approval, measured
+// (with a photo), documented and assumed length evidence, datums, an estimate a documented length falls
+// outside, an unknown beyond-datum allowance.
 export function build_synthetic_milestone(): LoomDocument {
   const E = "h_engine";
   const B = "h_body";
@@ -25,6 +30,8 @@ export function build_synthetic_milestone(): LoomDocument {
   const at_ground: Datum = "ground_stud_centre";
   const terminal = identified("p_terminal");
   const seal = identified("p_seal");
+  const estimate = (min_mm: number, max_mm: number) => ({ min_mm, max_mm, method: "synthetic body-dimension estimate" });
+  const w4 = wire("w4", E, "W4", [to_contact("j1", "2"), to_ground("g1")], spec(0.85, "B"), ["seg_j1_b1", "seg_b1_g1"]);
   let doc = create_empty_document("doc_synthetic_milestone", "SYNTHETIC MILESTONE (not a real vehicle)");
   doc = apply_ok(doc, [
     cmd_insert("harnesses", harness(E, "ENGINE_SIDE")),
@@ -58,15 +65,16 @@ export function build_synthetic_milestone(): LoomDocument {
     cmd_insert("nodes", node("n_s1", E, "splice", "s1")),
     cmd_insert("nodes", node("n_g1", E, "ground", "g1")),
     cmd_insert("nodes", node("n_b1", E, "breakout", null)),
-    cmd_insert("segments", segment("seg_j1_b1", E, "n_j1", "n_b1", 300, 5, 0, [at_connector, at_breakout])),
+    cmd_insert("segments", { ...segment("seg_j1_b1", E, "n_j1", "n_b1", 300, 5, 0, [at_connector, at_breakout]), length_estimate: estimate(250, 350) }),
     cmd_insert("segments", segment("seg_b1_s1", E, "n_b1", "n_s1", 120, 3, 1, [at_breakout, at_splice])),
-    cmd_insert("segments", segment("seg_s1_j2", E, "n_s1", "n_j2", 450, 5, 0, [at_splice, at_connector])),
+    cmd_insert("segments", { ...segment("seg_s1_j2", E, "n_s1", "n_j2", 450, 5, 0, [at_splice, at_connector]), length_estimate: estimate(500, 700) }),
     cmd_insert("segments", segment("seg_b1_x1", E, "n_b1", "n_x1", null, null, 0, [at_breakout, at_connector])),
     cmd_insert("segments", segment("seg_b1_g1", E, "n_b1", "n_g1", 80, 2, 0, [at_breakout, at_ground])),
     cmd_insert("wires", wire("w1", E, "W1", [to_contact("j1", "1"), to_splice("s1")], spec(0.5, "R"), ["seg_j1_b1", "seg_b1_s1"])),
     cmd_insert("wires", wire("w2", E, "W2", [to_splice("s1"), to_contact("j2", "1")], spec(0.5, "R"), ["seg_s1_j2"])),
     cmd_insert("wires", wire("w3", E, "W3", [to_splice("s1"), to_contact("x1", "1")], spec(0.5, "R"), ["seg_b1_s1", "seg_b1_x1"])),
-    cmd_insert("wires", wire("w4", E, "W4", [to_contact("j1", "2"), to_ground("g1")], spec(0.85, "B"), ["seg_j1_b1", "seg_b1_g1"])),
+    // Ring terminal not chosen yet: the wire beyond the stud centre is unknown.
+    cmd_insert("wires", { ...w4, allowances: { ...w4.allowances, end_b: { ...w4.allowances.end_b, beyond_datum_mm: null } } }),
     cmd_insert("wires", wire("w5", E, "W5", [to_contact("j1", "3"), to_contact("x1", "2")], spec(0.5, "G", ["W"]), ["seg_j1_b1", "seg_b1_x1"])),
     cmd_insert("wires", wire("w6", E, "W6", [to_contact("j1", "3"), to_contact("j2", "2")], spec(0.5, "G", ["W"]), ["seg_j1_b1", "seg_b1_s1", "seg_s1_j2"])),
     cmd_insert("wires", wire("w7", B, "W7", [to_contact("x2", "1"), to_contact("j3", "1")], spec(0.5, "R"), null)),
@@ -84,6 +92,13 @@ export function build_synthetic_milestone(): LoomDocument {
       blob_ref: "synthetic://fixture/diagram.pdf",
       title: "synthetic diagram placeholder (no real content)",
     }),
+    cmd_insert("assets", {
+      id: "a_photo_seg_j1_b1",
+      sha256: synthetic_photo_sha256,
+      media_type: "image/jpeg",
+      blob_ref: "synthetic://fixture/seg_j1_b1_tape.jpg",
+      title: "synthetic photo placeholder: tape along seg_j1_b1 (no real content)",
+    }),
     cmd_insert("view_positions", { id: "n_j1", x: 0, y: 0 }),
     cmd_insert("view_positions", { id: "n_b1", x: 300, y: 0 }),
   ], "b_build");
@@ -99,7 +114,15 @@ export function build_synthetic_milestone(): LoomDocument {
       note: "synthetic example of an LLM-inferred connection",
     })),
     cmd_insert("evidence", make_evidence(index, {
-      id: "e_seg_j1_b1_length", entity_id: "seg_j1_b1", field: "length", origin: "measured", source: null, note: "synthetic tape measurement",
+      id: "e_seg_j1_b1_length", entity_id: "seg_j1_b1", field: "length", origin: "measured",
+      source: { asset_id: "a_photo_seg_j1_b1", page_index: 0, bbox: null }, note: "synthetic tape measurement, tape in frame",
+    })),
+    cmd_insert("evidence", make_evidence(index, {
+      id: "e_seg_s1_j2_length", entity_id: "seg_s1_j2", field: "length", origin: "documented",
+      source: { asset_id: "a_diagram", page_index: 0, bbox: null }, note: "synthetic formboard dimension",
+    })),
+    cmd_insert("evidence", make_evidence(index, {
+      id: "e_seg_b1_g1_length", entity_id: "seg_b1_g1", field: "length", origin: "assumed", source: null, note: "synthetic guess, not measured",
     })),
     cmd_insert("reviews", make_review(doc, index, { id: "r_w1_spec", entity_id: "w1", field: "spec", status: "approved" })),
     cmd_insert("reviews", make_review(doc, index, { id: "r_w2_spec", entity_id: "w2", field: "spec", status: "approved" })),

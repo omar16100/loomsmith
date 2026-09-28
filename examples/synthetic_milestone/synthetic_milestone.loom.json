@@ -11,6 +11,13 @@
       "media_type": "application/pdf",
       "sha256": "2482dd3f269bca15de96089d4caa5fccb1675ff10d978cf9acfb24f17bc2af32",
       "title": "synthetic diagram placeholder (no real content)"
+    },
+    {
+      "blob_ref": "synthetic://fixture/seg_j1_b1_tape.jpg",
+      "id": "a_photo_seg_j1_b1",
+      "media_type": "image/jpeg",
+      "sha256": "660550cd0c2d9364fa5dbb5eb8f493d9acb8641b58063a93a680145cde064a84",
+      "title": "synthetic photo placeholder: tape along seg_j1_b1 (no real content)"
     }
   ],
   "connectors": [
@@ -322,13 +329,39 @@
   "document_id": "doc_synthetic_milestone",
   "evidence": [
     {
+      "entity_id": "seg_b1_g1",
+      "field": "length",
+      "id": "e_seg_b1_g1_length",
+      "note": "synthetic guess, not measured",
+      "origin": "assumed",
+      "source": null,
+      "value_json": "{\"datum_a\":\"breakout_centre\",\"datum_b\":\"ground_stud_centre\",\"nominal_mm\":80,\"note\":null,\"tol_minus_mm\":0,\"tol_plus_mm\":2}"
+    },
+    {
       "entity_id": "seg_j1_b1",
       "field": "length",
       "id": "e_seg_j1_b1_length",
-      "note": "synthetic tape measurement",
+      "note": "synthetic tape measurement, tape in frame",
       "origin": "measured",
-      "source": null,
+      "source": {
+        "asset_id": "a_photo_seg_j1_b1",
+        "bbox": null,
+        "page_index": 0
+      },
       "value_json": "{\"datum_a\":\"connector_back_face\",\"datum_b\":\"breakout_centre\",\"nominal_mm\":300,\"note\":null,\"tol_minus_mm\":0,\"tol_plus_mm\":5}"
+    },
+    {
+      "entity_id": "seg_s1_j2",
+      "field": "length",
+      "id": "e_seg_s1_j2_length",
+      "note": "synthetic formboard dimension",
+      "origin": "documented",
+      "source": {
+        "asset_id": "a_diagram",
+        "bbox": null,
+        "page_index": 0
+      },
+      "value_json": "{\"datum_a\":\"splice_centre\",\"datum_b\":\"connector_back_face\",\"nominal_mm\":450,\"note\":null,\"tol_minus_mm\":0,\"tol_plus_mm\":5}"
     },
     {
       "entity_id": "w7",
@@ -539,7 +572,11 @@
         "tol_minus_mm": 0,
         "tol_plus_mm": 5
       },
-      "length_estimate": null,
+      "length_estimate": {
+        "max_mm": 350,
+        "method": "synthetic body-dimension estimate",
+        "min_mm": 250
+      },
       "node_a": "n_j1",
       "node_b": "n_b1"
     },
@@ -554,7 +591,11 @@
         "tol_minus_mm": 0,
         "tol_plus_mm": 5
       },
-      "length_estimate": null,
+      "length_estimate": {
+        "max_mm": 700,
+        "method": "synthetic body-dimension estimate",
+        "min_mm": 500
+      },
       "node_a": "n_s1",
       "node_b": "n_j2"
     }
@@ -703,7 +744,7 @@
           "datum": "connector_back_face"
         },
         "end_b": {
-          "beyond_datum_mm": 20,
+          "beyond_datum_mm": null,
           "datum": "ground_stud_centre"
         },
         "service_loop_mm": 0

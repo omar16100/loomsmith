@@ -28,14 +28,15 @@
 - [x] F7 docs/data_model.md and docs/c4model.md match the code
 
 ## Deferred from M1 review (27 Sep 2026)
-- [ ] M1b schema-freeze checklist: nullable allowances (unknown strip/service length) instead of forced numbers; move `applied_batch_ids` idempotency history out of the document into the log/store (SaaS); length `origin` lives on evidence (spec said on the length); approvals bound to value, not revision (documented decision); batch actor field for SaaS; `format`/`schema_version` position in canonical file; public index exports internal helpers
+- [x] M1b schema-freeze checklist: nullable allowances (unknown strip/service length) instead of forced numbers (schema v2: per-end `{ datum, beyond_datum_mm }`, `service_loop_mm`, all nullable)
+- [ ] M1b schema-freeze checklist (remaining): move `applied_batch_ids` idempotency history out of the document into the log/store (SaaS); length `origin` lives on evidence (spec said on the length); approvals bound to value, not revision (documented decision); batch actor field for SaaS; `format`/`schema_version` position in canonical file; public index exports internal helpers
 - [ ] M2: isolation checks are O(N^2) (3000 nets gave 4.5M checks): switch to one check per net against all other nets tied together, or make the pairwise matrix opt-in, before worksheet export
 - [ ] M2: repair fingerprint rejects genuine improvements (e.g. overfilled contact 3 -> 2 ends) because it compares raw messages
 - [ ] M2: `batch_id` reuse with different content is accepted as a no-op (store a content hash)
 - [ ] Later: review warnings ignore harness scope
 - [ ] Later: reviews at the same revision are ordered by id
 - [ ] Later: inverse commands share entity objects with the document (clone on return)
-- [ ] Later: `route: []` on a same-node wire yields known length 0
+- [x] Later: `route: []` on a same-node wire yields known length 0 (resolved: route length 0 is right for a same-node wire; its cut length is the allowances, given from one point on that node, else `M_ALLOWANCE_DATUM_MISMATCH`)
 - [ ] Later: wire list sorts W10 before W2 (natural sort)
 - [ ] Later: `incompatible` parts pass completeness
 - [ ] Later: derivations do not log
@@ -48,3 +49,14 @@
 - [ ] When the API is public: `derive_test_data` ignores non-enumerable `mating_states` keys (JSON inputs are fine).
 - [ ] M1b freeze decision: restoring a value that an older review rejected yields only `W_REVIEW_STALE` (latest-review policy); decide whether any rejection of the current value should block.
 - [ ] M2 perf: `derive_test_data` runs `validate_structure` on every call.
+
+## Length capture (28 Sep 2026)
+- [x] Task 1: schema v2 (plus/minus tolerance bands, per-end segment datums, `length_estimate`, signed per-end allowances given from a datum), `make_length` builder, `model/datums.ts`
+- [x] Task 2: migration from schema_version 1 to 2, maps values exactly, invents nothing, refuses to repair
+- [x] Task 3: structural checks `S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`
+- [x] Task 4: build-level completeness rules (`M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`), enriched synthetic fixture (photo evidence, documented and assumed length evidence, an estimate a documented length falls outside, an unknown beyond-datum allowance)
+- [ ] M2 CLI and M4 web: discard pending batches and undo stacks after a migration
+- [ ] M4 measure mode (prefill `default_datum`)
+- [ ] terminal part data: strip length, insertion depth
+- [ ] photo-assisted measurement spike (after M4)
+- [ ] rope method for new designs

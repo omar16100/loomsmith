@@ -34,6 +34,9 @@ describe("routes and lengths", () => {
 
   it("sums known segments and allowances with worst-case plus and minus bands", () => {
     expect(route_length(index, w("W4"))).toEqual({ status: "known", nominal_mm: 380, tol_plus_mm: 7, tol_minus_mm: 0, unknown_segment_ids: [] });
+    expect(cut_length(index, w("W4"))).toEqual({
+      status: "unknown", nominal_mm: null, tol_plus_mm: null, tol_minus_mm: null, unknown_segment_ids: [], unknown_allowances: ["end_b.beyond_datum_mm"], datum_problems: [],
+    });
     expect(cut_length(index, w("W1"))).toEqual({
       status: "known", nominal_mm: 460, tol_plus_mm: 8, tol_minus_mm: 1, unknown_segment_ids: [], unknown_allowances: [], datum_problems: [],
     });

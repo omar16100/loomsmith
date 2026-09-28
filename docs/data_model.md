@@ -10,7 +10,7 @@ fixes F1 to F5). It documents only
 what the code in `/Users/macmini/projects/loomsmith/packages/core/src` does; it is not a
 design proposal. Source of truth for each section is the file named in that section.
 
-Last verified: 27 Sep 2026, against branch `feat/m0_m1_core`, 99 passing tests (12 files).
+Last verified: 28 Sep 2026, against branch `feat/length_capture`, 135 passing tests (14 files).
 
 ## 2. File format
 
@@ -142,6 +142,7 @@ and `/Users/macmini/projects/loomsmith/packages/core/src/schema/document.ts`.
   `value_json` to the field's current canonical JSON; a mismatch is `stale` and is reported
   as `W_EVIDENCE_STALE`. A `reviews` row whose own `review_state` is `stale` and that is
   still the latest review for its `(entity_id, field)` is reported as `W_REVIEW_STALE`.
+- Photos: an image asset (`media_type` `image/...`) cited with `source: { asset_id, page_index: 0, bbox: null }`; image regions are not addressed yet. A length measurement should cite a photo with the tape in frame.
 
 ## 5. Command log
 
@@ -235,6 +236,12 @@ From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts
 | `M_ENDPOINT_NODE_MISSING` | one of a wire's ends has no topology node to route from/to |
 | `M_ROUTE_NOT_CONTIGUOUS` | a wire's route segments do not chain from its start node to its end node |
 | `M_LENGTH_UNKNOWN` | a wire's route is contiguous but crosses one or more segments with unknown `nominal_mm` |
+| `M_LENGTH_UNMEASURED` | a segment crossed by an `ok` route has a `nominal_mm` but no current evidence on `length` with origin `measured` or `documented` (`inferred` and `assumed` never count, even approved) |
+| `M_LENGTH_DATUM_UNKNOWN` | a segment crossed by an `ok` route has `datum_a` or `datum_b` `null` |
+| `M_ROUTE_DATUM_MISMATCH` | on an `ok` route, two consecutive segments were measured to different points of the node where they meet (for example a connector's mating face and its back face), so the distance between the points is in neither |
+| `M_ALLOWANCE_UNKNOWN` | a wire has an unknown (`null`) allowance field, whatever its route status; the message lists them |
+| `M_ALLOWANCE_DATUM_MISMATCH` | on an `ok` route, a wire end's allowance datum differs from the datum the route was measured to at that end (datums are never converted); on a same-node wire (`route: []`), an allowance datum is not a point on that node's kind or the two ends' datums differ |
+| `M_CUT_LENGTH_NOT_POSITIVE` | a known cut length is 0 or less (possible with negative `beyond_datum_mm`) |
 | `M_PART_UNIDENTIFIED` | a housing, terminal, seal or splice part use is not `identified` |
 | `M_REVIEW_REJECTED` | the latest, current (non-stale) review of a field has `status: "rejected"`: the reviewer flagged the current value as wrong, so the build is blocked until a corrected value is recorded |
 
@@ -244,6 +251,7 @@ From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts
 |---|---|
 | `W_EVIDENCE_STALE` | an evidence row's recorded value no longer matches the field's current value |
 | `W_INFERRED_UNREVIEWED` | evidence with `origin: "inferred"` is not currently approved |
+| `W_LENGTH_OUTSIDE_ESTIMATE` | an in-scope segment's `nominal_mm` is below `length_estimate.min_mm` or above `max_mm` (bounds inclusive), whatever its evidence or routing: check for a typo before cutting |
 | `W_REVIEW_STALE` | the latest review of a field is stale (the field changed since it was reviewed) |
 
 `validate()` (`validate.ts`) always runs structural checks; completeness checks run only

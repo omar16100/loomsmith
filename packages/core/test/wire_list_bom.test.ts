@@ -43,7 +43,7 @@ describe("bill of materials", () => {
       part_line("splice", "p_splice", "SYN-SP1", "splice crimp (synthetic)", 1, "identified"),
       wire_line("0.5 mm2 G-W", null, 910, 1),
       wire_line("0.5 mm2 R", null, 460, 2),
-      wire_line("0.85 mm2 B", 420, 420, 0),
+      wire_line("0.85 mm2 B", null, 0, 1),
       wire_line("0.85 mm2 R", 490, 490, 0),
       wire_line("UNKNOWN mm2 UNKNOWN", null, 0, 1),
     ]);

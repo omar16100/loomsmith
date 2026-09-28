@@ -42,7 +42,9 @@ for the file format, entity fields, validation codes and derivation rules.
 | `model/empty_document.ts` | Empty document factory |
 | `model/doc_index.ts` | Lookup maps and endpoint keys |
 | `model/scope.ts` | `ScopeOptions`/`in_scope`: harness-id scope filter shared by `validate/completeness.ts` and `derive/nets.ts`, `derive/test_data.ts`, `derive/wire_list.ts`, `derive/bom.ts` |
-| `migrate/load_document.ts` | schema_version checks, migrations, parse |
+| `model/make_length.ts` | length builder with the never-short default |
+| `model/datums.ts` | datum to node kind map and editor defaults |
+| `migrate/load_document.ts`, `migrate/v1_to_v2.ts` | schema_version checks, step-by-step migrations (1 to 2: plus/minus tolerance, datums, per-end allowances from a datum; validates against frozen v1 shapes, translates evidence and review value JSON, refuses any current/stale flip), parse |
 | `validate/issue.ts`, `validate/structural.ts`, `validate/completeness.ts`, `validate/review_state.ts`, `validate/validate.ts` | Structural checks (`S_*`) and manufacturing-completeness checks (`M_*`, `W_*`), issue objects with code, severity, JSON path, entity id, fix hint; evidence/review staleness |
 | `commands/builders.ts`, `commands/apply_command.ts`, `commands/apply_batch.ts` | Command definitions with preconditions, reducer `apply_batch(doc, batch) -> result`, inverses, idempotency by batch_id, expected_revision check |
 | `derive/topology.ts`, `derive/nets.ts`, `derive/test_data.ts`, `derive/wire_list.ts`, `derive/bom.ts` | Route analysis, route/cut lengths, union-find nets with mating states (`active_matings` shared by nets and test data), bench continuity/isolation test data (fails closed: runs `validate/structural.ts` and boundary checks first and returns problems instead of data), wire list, BOM (unknown wire length is `null`, never 0) |
@@ -62,3 +64,5 @@ for the file format, entity fields, validation codes and derivation rules.
 - The reducer is deterministic: core reads no Node or DOM API (the core tsconfig has `types: []` and `lib: ["ES2023"]`) and no clock or RNG (checked by the ast-grep purity scan run before each milestone commit, not yet in CI), and the same doc + batch gives the same canonical output within one runtime (tested in Node). Byte-identical output across Node and the browser is a design goal to be verified in M4, when the web editor exists; it is not yet a tested fact.
 - Credentials never appear in documents, command logs, autosave or logs.
 - OEM-derived data never lives in this repo.
+- Unknown is never 0: an unknown segment length, datum or allowance makes every cut length that depends on it unknown; datums are checked along the whole route and never converted; a routed length is buildable only with current measured or documented evidence.
+- Migrations never repair data and never change whether an evidence row or review is current.
