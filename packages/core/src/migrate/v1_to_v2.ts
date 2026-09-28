@@ -2,7 +2,9 @@ import * as z from "zod";
 import { canonical_json } from "../model/canonical.ts";
 
 type RawRecord = Record<string, unknown>;
-export type MigrationResult = { ok: true; raw: RawRecord } | { ok: false; details: string[] };
+// One count per collection touched by the migration; the caller logs these (core stays silent, see load_document.ts).
+export type MigrationStats = Readonly<Record<string, number>>;
+export type MigrationResult = { ok: true; raw: RawRecord; stats: MigrationStats } | { ok: false; details: string[] };
 
 // Frozen copies of the version 1 shapes this step rewrites. They must never follow later schema changes.
 const v1_length_schema = z.strictObject({
@@ -151,12 +153,40 @@ export function migrate_v1_to_v2(raw: RawRecord): MigrationResult {
     if (field === "allowances" && wire_ids.has(entity_id)) return translate_recorded(recorded, v1_allowances_schema, allowances_to_v2);
     return recorded;
   };
+  let evidence_translated = 0;
+  let evidence_unchanged = 0;
   if (Array.isArray(raw["evidence"])) {
-    next["evidence"] = raw["evidence"].map((e: unknown) => (is_record(e) ? { ...e, value_json: translate(e["entity_id"], e["field"], e["value_json"]) } : e));
+    next["evidence"] = raw["evidence"].map((e: unknown) => {
+      if (!is_record(e)) {
+        evidence_unchanged += 1;
+        return e;
+      }
+      const value_json = translate(e["entity_id"], e["field"], e["value_json"]);
+      if (value_json !== e["value_json"]) evidence_translated += 1;
+      else evidence_unchanged += 1;
+      return { ...e, value_json };
+    });
   }
+  let reviews_translated = 0;
+  let reviews_unchanged = 0;
   if (Array.isArray(raw["reviews"])) {
-    next["reviews"] = raw["reviews"].map((r: unknown) => (is_record(r) ? { ...r, reviewed_value_json: translate(r["entity_id"], r["field"], r["reviewed_value_json"]) } : r));
+    next["reviews"] = raw["reviews"].map((r: unknown) => {
+      if (!is_record(r)) {
+        reviews_unchanged += 1;
+        return r;
+      }
+      const reviewed_value_json = translate(r["entity_id"], r["field"], r["reviewed_value_json"]);
+      if (reviewed_value_json !== r["reviewed_value_json"]) reviews_translated += 1;
+      else reviews_unchanged += 1;
+      return { ...r, reviewed_value_json };
+    });
   }
   const state_problems = check_record_states(raw, next);
-  return state_problems.length > 0 ? { ok: false, details: state_problems } : { ok: true, raw: next };
+  if (state_problems.length > 0) return { ok: false, details: state_problems };
+  const stats: MigrationStats = {
+    segments: Array.isArray(raw["segments"]) ? raw["segments"].length : 0,
+    wires: Array.isArray(raw["wires"]) ? raw["wires"].length : 0,
+    evidence_translated, evidence_unchanged, reviews_translated, reviews_unchanged,
+  };
+  return { ok: true, raw: next, stats };
 }

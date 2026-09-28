@@ -10,7 +10,11 @@ describe("load_document", () => {
     const text = to_canonical_file(small_doc());
     const result = load_document(JSON.parse(text));
     expect(result.ok).toBe(true);
-    if (result.ok) expect(to_canonical_file(result.doc)).toBe(text);
+    if (result.ok) {
+      expect(to_canonical_file(result.doc)).toBe(text);
+      // A document already at the current schema_version was never migrated.
+      expect(result.migrated_from).toBeNull();
+    }
   });
 
   it("rejects non-objects and other formats", () => {

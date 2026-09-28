@@ -10,7 +10,7 @@ export interface LoadError {
   message: string;
   details: string[];
 }
-export type LoadResult = { ok: true; doc: LoomDocument } | { ok: false; error: LoadError };
+export type LoadResult = { ok: true; doc: LoomDocument; migrated_from: number | null } | { ok: false; error: LoadError };
 
 type RawDocument = Record<string, unknown>;
 
@@ -32,13 +32,14 @@ export function load_document(raw: unknown, log: Logger = null_logger): LoadResu
     return fail(log, "future_version", `schema_version ${version} is newer than supported ${current_schema_version}; update loomsmith`);
   }
   if (version < 1) return fail(log, "unsupported_version", `schema_version ${version} is not supported`);
+  const migrated_from = version < current_schema_version ? version : null;
   for (let from = version; from < current_schema_version; from += 1) {
     const step = migrations[from - 1];
     if (!step) return fail(log, "unsupported_version", `no migration from schema_version ${from}`);
     const migrated = step(record);
     if (!migrated.ok) return fail(log, "migration_failed", `schema_version ${from} document cannot be migrated to ${from + 1}`, migrated.details);
     record = migrated.raw;
-    log.info("document migrated", { from, to: from + 1 });
+    log.info("document migrated", { from, to: from + 1, ...migrated.stats });
   }
   const parsed = document_schema.safeParse(record);
   if (!parsed.success) {
@@ -46,5 +47,5 @@ export function load_document(raw: unknown, log: Logger = null_logger): LoadResu
     return fail(log, "invalid_document", "document failed schema validation", details);
   }
   log.debug("document loaded", { document_id: parsed.data.document_id, revision: parsed.data.revision });
-  return { ok: true, doc: canonicalize_document(parsed.data) };
+  return { ok: true, doc: canonicalize_document(parsed.data), migrated_from };
 }

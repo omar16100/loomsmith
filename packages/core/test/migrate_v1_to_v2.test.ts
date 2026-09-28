@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { route_end_datums } from "../src/derive/topology.ts";
 import { derive_wire_list } from "../src/derive/wire_list.ts";
+import { create_memory_logger } from "../src/log.ts";
 import { canonical_json, to_canonical_file } from "../src/model/canonical.ts";
 import { default_datum } from "../src/model/datums.ts";
 import { build_index } from "../src/model/doc_index.ts";
@@ -194,5 +195,16 @@ describe("schema_version 1 to 2 migration", () => {
     expect(JSON.stringify(raw)).toBe(JSON.stringify(v1()));
     const text = to_canonical_file(load_ok(v1()));
     expect(to_canonical_file(load_ok(JSON.parse(text)))).toBe(text);
+  });
+
+  it("logs what it rewrote, and tells the caller the document was migrated", () => {
+    const logger = create_memory_logger();
+    const result = load_document(v1(), logger);
+    expect(result.ok).toBe(true);
+    if (result.ok) expect(result.migrated_from).toBe(1);
+    const entry = logger.entries.find((e) => e.message === "document migrated");
+    expect(entry?.data).toEqual({
+      from: 1, to: 2, segments: 5, wires: 8, evidence_translated: 1, evidence_unchanged: 1, reviews_translated: 0, reviews_unchanged: 2,
+    });
   });
 });
