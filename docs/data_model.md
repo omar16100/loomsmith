@@ -6,11 +6,15 @@ Category: Reference.
 
 This document describes the file format, entities, evidence/review model, command log
 and derivations implemented in `@loomsmith/core` as of M1 (Task 10 plus the final review
-fixes F1 to F5). It documents only
+fixes F1 to F5). It also covers schema v2 length capture
+(`/Users/macmini/projects/loomsmith/docs/28092026_length_capture_plan.md`): asymmetric
+tolerance bands, per-segment-end datums, length estimates and signed per-end allowances,
+the version 1 to 2 migration, and the completeness rules that block release on them. It
+documents only
 what the code in `/Users/macmini/projects/loomsmith/packages/core/src` does; it is not a
 design proposal. Source of truth for each section is the file named in that section.
 
-Last verified: 28 Sep 2026, against branch `feat/length_capture`, 135 passing tests (14 files).
+Last verified: 28 Sep 2026, against branch `feat/length_capture`, 137 passing tests (14 files).
 
 ## 2. File format
 
@@ -77,7 +81,14 @@ rewritten value must match the frozen version 1 shape exactly (no extra, missing
 null-where-required keys); nothing is repaired. Evidence and review value JSON is translated only
 when it is exactly the canonical JSON of a valid version 1 value, and every evidence row and
 review must keep its current or stale state (targets resolved like `build_index`); otherwise the
-load fails.
+load fails. `migrate_v1_to_v2` stays pure (no logging) and returns, on success, `MigrationStats`
+(counts `segments`, `wires`, `evidence_translated`, `evidence_unchanged`, `reviews_translated`,
+`reviews_unchanged`; translated means the stored string changed) alongside the migrated document.
+`load_document` logs an info entry `document migrated` with `{ from, to, ...stats }` for each
+migration step it runs, and its `LoadResult` ok variant carries `migrated_from` (the original
+`schema_version` when at least one migration ran, else `null`), so a caller such as the CLI or
+web can discard pending batches and undo stacks after a migration (D12 in the length capture
+plan).
 
 ## 3. Entities
 
@@ -283,6 +294,9 @@ here is stored in the document.
   ends' `beyond_datum_mm` + `service_loop_mm`, with the route's bands unchanged. It is known
   only if the route is known, every allowance is known and `check_route_datums` finds
   nothing; datums are never converted. Lengths are rounded to 3 decimal places (`round_mm`).
+  A tolerance band may be unknown (`null` in the cut length) without blocking release: no
+  completeness rule requires `tol_plus_mm`/`tol_minus_mm` to be known, only `nominal_mm`,
+  the datums and the allowances.
 - **Nets** (`derive_nets`, `/Users/macmini/projects/loomsmith/packages/core/src/derive/nets.ts`):
   union-find over wire endpoints (`contact:<id>`, `splice:<id>`, `ground_point:<id>`; `open`
   ends contribute no key) plus the cavity pairs of every active mating. `active_matings`
@@ -346,7 +360,8 @@ here is stored in the document.
   - `known_quantity` (`number`): for part lines equal to `quantity`; for wire lines the
     sum of the known cut lengths only (rounded with `round_mm`).
   - `unknown_quantity` (`number`): for wire lines the number of wires whose cut length
-    could not be computed; always 0 for part lines.
+    could not be computed; always 0 for part lines. A known cut length of 0 or less (a
+    data error, `M_CUT_LENGTH_NOT_POSITIVE`) counts here too, never as a quantity.
 
   Sorted by category (`housing`, `terminal`, `seal`, `splice`, `wire`), then description,
   then identification, then part id, then the full grouping key as the final tiebreak, so

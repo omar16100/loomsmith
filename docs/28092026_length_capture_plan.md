@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Category: Plan / task record. Status: planned 28 Sep 2026, revision 2 after codex astra review r1 (/Users/macmini/projects/codex/loomsmith_length_capture_plan_review_28092026.txt). Branch `feat/length_capture` (from `main` ce77d35).
+Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) after codex astra review r1 (/Users/macmini/projects/codex/loomsmith_length_capture_plan_review_28092026.txt). Branch `feat/length_capture` (from `main` ce77d35).
 
 **Goal:** Let a document record how a harness was measured (asymmetric tolerance, measurement points at both ends of every segment, a pre-measurement estimate, per-end allowances given from a stated datum and allowed to be unknown) and block release outputs until every routed length is measured, pinned to its datums and backed by measured or documented evidence.
 
@@ -77,7 +77,7 @@ Category: Plan / task record. Status: planned 28 Sep 2026, revision 2 after code
 **Interfaces:**
 - Produces: `datum_schema`, `Datum`, v2 `length_schema`, `Length`, `length_estimate_schema`, `LengthEstimate` (primitives.ts); `current_schema_version = 2`, `end_allowance_schema`, `allowances_schema`, `EndAllowance`, `Allowances`, `segment_schema` with `length_estimate` (document.ts); `make_length(input: LengthInput): Length`, `LengthInput`; `datum_node_kind: Readonly<Record<Datum, TopologyNode["kind"]>>`, `default_datum: Readonly<Record<TopologyNode["kind"], Datum>>`; in topology.ts: `LengthValue { status; nominal_mm; tol_plus_mm; tol_minus_mm; unknown_segment_ids }`, `CutLengthValue extends LengthValue { unknown_allowances: string[]; datum_problems: string[] }`, `RouteEndDatums { end_a: Datum | null; end_b: Datum | null }`, `route_end_datums(index, wire): RouteEndDatums | null`, `DatumCheck { unknown_ends: string[]; join_conflicts: string[]; allowance_conflicts: Array<{ side: "end_a" | "end_b"; message: string }> }`, `check_route_datums(index, wire): DatumCheck | null`, `datum_problems(index, wire): string[]`, `unknown_allowances(wire): string[]`, `route_length(index, wire): LengthValue`, `cut_length(index, wire): CutLengthValue`. Test helper `segment(id, harness_id, node_a, node_b, nominal_mm, tol_plus_mm = null, tol_minus_mm = 0, datums: [Datum | null, Datum | null] = [null, null])`; `wire(...)` gives each end `{ datum: <default for the end kind>, beyond_datum_mm: 20 }` and `service_loop_mm: 0`.
 
-- [ ] **Step 1: Freeze the v1 golden file before changing anything**
+- [x] **Step 1: Freeze the v1 golden file before changing anything**
 
 ```bash
 cp examples/synthetic_milestone/synthetic_milestone.loom.json packages/core/test/fixtures/synthetic_milestone_v1.loom.json
@@ -86,7 +86,7 @@ git show ce77d35:examples/synthetic_milestone/synthetic_milestone.loom.json | cm
 
 Expected: `cmp` prints nothing (identical to main).
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 Create `packages/core/test/make_length.test.ts`:
 
@@ -295,12 +295,12 @@ replace the two length tests with
   });
 ```
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `pnpm vitest run packages/core/test/make_length.test.ts packages/core/test/topology.test.ts packages/core/test/schema.test.ts`
 Expected: FAIL (cannot resolve `../src/model/make_length.ts`; `route_end_datums` and `unknown_allowances` not exported; `segment_schema` rejects `length_estimate`).
 
-- [ ] **Step 4: Implement the schema**
+- [x] **Step 4: Implement the schema**
 
 In `packages/core/src/schema/primitives.ts` replace `length_schema` with:
 
@@ -429,7 +429,7 @@ export const default_datum: Readonly<Record<TopologyNode["kind"], Datum>> = Obje
 
 In `packages/core/src/index.ts` add `export * from "./model/make_length.ts";` and `export * from "./model/datums.ts";` after the `empty_document` export.
 
-- [ ] **Step 5: Implement the length math**
+- [x] **Step 5: Implement the length math**
 
 In `packages/core/src/derive/topology.ts`:
 - imports: add `import { datum_node_kind } from "../model/datums.ts";` and `import type { Datum } from "../schema/primitives.ts";`, and add `Segment` to the document type import (`import type { Segment, Wire, WireEnd } from "../schema/document.ts";`)
@@ -600,7 +600,7 @@ export function cut_length(index: DocIndex, wire: Wire): CutLengthValue {
 
 In `packages/core/src/derive/wire_list.ts` change the topology import to `import { analyse_route, cut_length, type CutLengthValue, type RouteStatus } from "./topology.ts";` and the row field to `cut_length: CutLengthValue;`.
 
-- [ ] **Step 6: Move the existing tests and fixture to v2 shapes**
+- [x] **Step 6: Move the existing tests and fixture to v2 shapes**
 
 `packages/core/test/helpers/entities.ts`:
 - imports: add `import { make_length } from "../../src/model/make_length.ts";` and change the primitives type import to `import type { Datum, PartUse } from "../../src/schema/primitives.ts";`.
@@ -675,7 +675,7 @@ export function wire(id: string, harness_id: string, label: string, ends: [WireE
 
 `packages/core/test/load_document.test.ts`: the future version case becomes `schema_version: 3`.
 
-- [ ] **Step 7: Regenerate the snapshots and run the suite**
+- [x] **Step 7: Regenerate the snapshots and run the suite**
 
 ```bash
 git rm -q packages/core/generated/loomsmith_document_v1.schema.json
@@ -686,7 +686,7 @@ pnpm check
 
 Expected: `pnpm check` passes. Golden diff contains only: `schema_version` 2; every segment's v2 length (with the datums above) and `length_estimate: null`; `seg_b1_s1` minus band 1; every wire's `{ end_a: { datum, beyond_datum_mm: 20 }, end_b: {...}, service_loop_mm: 0 }`; `e_seg_j1_b1_length.value_json` now holding the v2 length with its datums.
 
-- [ ] **Step 8: Update docs/data_model.md**
+- [x] **Step 8: Update docs/data_model.md**
 
 - Section 2 table: `schema_version` literal `2`.
 - Unit rules paragraph: "**Unit rules**: canonical units are millimetres for lengths (`length.nominal_mm`, `tol_plus_mm`, `tol_minus_mm`, `length_estimate.min_mm`/`max_mm`, `beyond_datum_mm`, `service_loop_mm`) and `cross_section_mm2`. An unknown value is always `null`, never `0` (`length_schema`, `allowances_schema`, `wire_spec_schema`)."
@@ -698,7 +698,7 @@ Expected: `pnpm check` passes. Golden diff contains only: `schema_version` 2; ev
   - "**allowances**: `{ end_a, end_b, service_loop_mm }`; each end `{ datum (datum or null), beyond_datum_mm (signed number or null) }`: the wire length from that datum to the cut end of the conductor, slack at that end included (negative when the conductor stops short of the datum, e.g. the mating face or a ring terminal on a stud centre). `service_loop_mm` non-negative or null. Strip length is not an allowance: it is inside the cut length and belongs to terminal part data."
 - Section 7 **Length rules**: "`route_length` sums segment `length.nominal_mm` and, separately, `tol_plus_mm` and `tol_minus_mm` along an `ok` route; a band is `null` if any crossed segment's band on that side is `null`. Any crossed `nominal_mm: null` gives `status: "unknown"` with `unknown_segment_ids`; a non-`ok` route is `status: "unavailable"`. `route_end_datums` reads the datum at each wire end from the end segment, in whichever direction it is stored. `check_route_datums` checks the whole route: every crossed segment end has a datum, consecutive segments meet at the same point, and each wire end's allowance datum equals the route's datum there; a same-node wire (`route: []`, length 0) needs both allowance datums equal and on that node's kind. `cut_length` returns a `CutLengthValue` (adds `unknown_allowances` and `datum_problems`): route length + both ends' `beyond_datum_mm` + `service_loop_mm`, with the route's bands unchanged. It is known only if the route is known, every allowance is known and `check_route_datums` finds nothing; datums are never converted. Lengths are rounded to 3 decimal places (`round_mm`)."
 
-- [ ] **Step 9: Commit**
+- [x] **Step 9: Commit**
 
 ```bash
 git add -A packages/core examples docs/data_model.md
@@ -717,7 +717,7 @@ git commit -m "feat(core): schema v2 lengths with plus/minus bands, datums, esti
 - Consumes: v2 schema, `route_end_datums`, `default_datum`, frozen `test/fixtures/synthetic_milestone_v1.loom.json` (Task 1); `canonical_json`; `evidence_state`, `review_state`; `derive_wire_list`.
 - Produces: `MigrationResult = { ok: true; raw: Record<string, unknown> } | { ok: false; details: string[] }`, `migrate_v1_to_v2(raw): MigrationResult`; `LoadErrorCode` gains `"migration_failed"`.
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Create `packages/core/test/migrate_v1_to_v2.test.ts`:
 
@@ -924,12 +924,12 @@ describe("schema_version 1 to 2 migration", () => {
 
 (Golden order: segments sorted by id put `seg_b1_g1` at index 0; wires put `w1` at index 0.)
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm vitest run packages/core/test/migrate_v1_to_v2.test.ts`
 Expected: FAIL (cannot resolve `../src/migrate/v1_to_v2.ts`).
 
-- [ ] **Step 3: Implement the migration**
+- [x] **Step 3: Implement the migration**
 
 Create `packages/core/src/migrate/v1_to_v2.ts`:
 
@@ -1121,18 +1121,18 @@ const migrations: ReadonlyArray<(raw: RawDocument) => MigrationResult> = [migrat
   }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm vitest run packages/core/test/migrate_v1_to_v2.test.ts` then `pnpm check`
 Expected: PASS.
 
-- [ ] **Step 5: Update docs/data_model.md**
+- [x] **Step 5: Update docs/data_model.md**
 
 At the end of section 2 add:
 
 "**Migrations** (`migrate/load_document.ts`; one file per step, `migrate/v1_to_v2.ts`): an older `schema_version` is upgraded step by step before schema validation; a newer one is rejected (`future_version`); a step that cannot migrate fails with `migration_failed` and the paths. Version 1 to 2 maps value for value and invents nothing: `tol_mm` becomes equal `tol_plus_mm` and `tol_minus_mm`; the free-text `datum` moves to `note`, `datum_a`/`datum_b` are `null`; `allowances.end_a_mm`/`end_b_mm` become that end's `beyond_datum_mm` with `datum: null`; `service_mm` becomes `service_loop_mm`; `length_estimate` is `null`. Migrated cut lengths are therefore unknown until the datums are recorded, then exactly what version 1 computed. Each rewritten value must match the frozen version 1 shape exactly (no extra, missing or null-where-required keys); nothing is repaired. Evidence and review value JSON is translated only when it is exactly the canonical JSON of a valid version 1 value, and every evidence row and review must keep its current or stale state (targets resolved like `build_index`); otherwise the load fails."
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/core/src/migrate packages/core/test/migrate_v1_to_v2.test.ts docs/data_model.md
@@ -1150,7 +1150,7 @@ git commit -m "feat(core): migrate schema_version 1 documents to 2 without repai
 - Consumes: `datum_node_kind` (model/datums.ts), segment `length.datum_a`/`datum_b`, `length_estimate` (Task 1); `apply_batch`, `make_batch`, `apply_ok`.
 - Produces: `S_DATUM_NODE_KIND` (path `segments/<id>/length/datum_a|datum_b`), `S_LENGTH_ESTIMATE_RANGE` (path `segments/<id>/length_estimate`).
 
-- [ ] **Step 1: Write the failing tests**
+- [x] **Step 1: Write the failing tests**
 
 Add inside `describe("validate_structure", ...)` in `packages/core/test/structural.test.ts`:
 
@@ -1208,12 +1208,12 @@ In `packages/core/test/apply_batch.test.ts` change the helpers import to `import
   });
 ```
 
-- [ ] **Step 2: Run the tests to verify they fail**
+- [x] **Step 2: Run the tests to verify they fail**
 
 Run: `pnpm vitest run packages/core/test/structural.test.ts packages/core/test/apply_batch.test.ts`
 Expected: FAIL (the new structural tests get `[]`; the node kind and inverted estimate batches are accepted; `repair_required` is not raised).
 
-- [ ] **Step 3: Implement**
+- [x] **Step 3: Implement**
 
 In `packages/core/src/validate/structural.ts`:
 - add `import { datum_node_kind } from "../model/datums.ts";`
@@ -1239,12 +1239,12 @@ In `packages/core/src/validate/structural.ts`:
   }
 ```
 
-- [ ] **Step 4: Run the tests to verify they pass**
+- [x] **Step 4: Run the tests to verify they pass**
 
 Run: `pnpm vitest run packages/core/test/structural.test.ts packages/core/test/apply_batch.test.ts` then `pnpm check`
 Expected: PASS.
 
-- [ ] **Step 5: Update docs/data_model.md**
+- [x] **Step 5: Update docs/data_model.md**
 
 Structural table, after `S_SEGMENT_LOOP`:
 
@@ -1255,7 +1255,7 @@ Structural table, after `S_SEGMENT_LOOP`:
 
 Section 5 (command log), add: "**Format contract**: `command_schema_version` versions the batch envelope. Batches and inverse batches are built against the current document format; callers discard pending batches and undo stacks when a document is migrated. Entity payloads are validated against the current schema (an old-shaped segment or wire is `invalid_entity`); evidence `value_json` is an opaque string, so an insert carrying an old-format value is accepted and is simply stale."
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add packages/core/src/validate/structural.ts packages/core/test/structural.test.ts packages/core/test/apply_batch.test.ts docs/data_model.md
@@ -1275,7 +1275,7 @@ git commit -m "feat(core): structural checks for segment datums and estimate ran
 - Consumes: `analyse_route`, `route_length`, `check_route_datums`, `cut_length`, `unknown_allowances` (topology.ts); `evidence_state`, `make_evidence`, `make_review`; `make_length`.
 - Produces: `M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN` (segment, `segments/<id>/length`), `M_ROUTE_DATUM_MISMATCH` (wire, `wires/<id>/route`), `M_ALLOWANCE_UNKNOWN` (wire, `wires/<id>/allowances`), `M_ALLOWANCE_DATUM_MISMATCH` (wire, `wires/<id>/allowances/end_a|end_b/datum`), `M_CUT_LENGTH_NOT_POSITIVE` (wire, `wires/<id>/allowances`), `W_LENGTH_OUTSIDE_ESTIMATE` (segment, `segments/<id>/length`).
 
-- [ ] **Step 1: Enrich the fixture**
+- [x] **Step 1: Enrich the fixture**
 
 In `packages/core/test/fixtures/synthetic_milestone.ts`:
 - after `synthetic_asset_sha256` add:
@@ -1336,7 +1336,7 @@ export const synthetic_photo_sha256 = "660550cd0c2d9364fa5dbb5eb8f493d9acb8641b5
     })),
 ```
 
-- [ ] **Step 2: Write the failing tests**
+- [x] **Step 2: Write the failing tests**
 
 In `packages/core/test/completeness.test.ts`:
 - imports: `import type { Evidence, LoomDocument } from "../src/schema/document.ts";`, `import type { Datum } from "../src/schema/primitives.ts";`, add `make_evidence` to the review_state import, and `import { make_length } from "../src/model/make_length.ts";`.
@@ -1497,12 +1497,12 @@ In `packages/core/test/topology.test.ts` add to the known-length test:
 
 In `packages/core/test/wire_list_bom.test.ts` the BOM line `wire_line("0.85 mm2 B", 420, 420, 0)` becomes `wire_line("0.85 mm2 B", null, 0, 1)`.
 
-- [ ] **Step 3: Run the tests to verify they fail**
+- [x] **Step 3: Run the tests to verify they fail**
 
 Run: `pnpm vitest run packages/core/test/completeness.test.ts`
 Expected: FAIL (no new issue codes emitted yet).
 
-- [ ] **Step 4: Implement**
+- [x] **Step 4: Implement**
 
 In `packages/core/src/validate/completeness.ts`:
 - first import: `import { analyse_route, check_route_datums, cut_length, route_length, unknown_allowances } from "../derive/topology.ts";`
@@ -1579,7 +1579,7 @@ function check_lengths(doc: LoomDocument, index: DocIndex, options: ScopeOptions
 }
 ```
 
-- [ ] **Step 5: Regenerate the golden file and run the suite**
+- [x] **Step 5: Regenerate the golden file and run the suite**
 
 ```bash
 pnpm vitest run -u packages/core/test/synthetic_milestone.test.ts
@@ -1588,7 +1588,7 @@ pnpm check
 
 Expected: PASS. The golden diff shows only: estimates on `seg_j1_b1` and `seg_s1_j2`; `beyond_datum_mm: null` on `w4` end_b; asset `a_photo_seg_j1_b1`; `e_seg_j1_b1_length` citing it with the new note; evidence `e_seg_s1_j2_length` and `e_seg_b1_g1_length`.
 
-- [ ] **Step 6: Docs and bookkeeping**
+- [x] **Step 6: Docs and bookkeeping**
 
 `docs/data_model.md`:
 - section 1: "Last verified" line updated to today, branch `feat/length_capture`, and the actual passing test and file counts from `pnpm check`.
@@ -1616,7 +1616,7 @@ Expected: PASS. The golden diff shows only: estimates on `seg_j1_b1` and `seg_s1
 
 This plan: Status "done (date)", Deviations filled in.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add -A packages/core examples docs todo.md
@@ -1656,3 +1656,4 @@ Done (28 Sep 2026). Tasks 1 to 4 implemented on branch `feat/length_capture`: sc
 - 28 Sep 2026, before execution (codex r1): per-end allowances are `{ datum, beyond_datum_mm }` instead of the spec's strip / insertion / slack split (D5); migration keeps v1 end allowances as `beyond_datum_mm` with unknown datums instead of inventing a split (D7); added `M_LENGTH_DATUM_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE` and load error `migration_failed`.
 - 28 Sep 2026, before execution (codex r2): datums are checked at every route join, not only the wire ends (`check_route_datums`, `M_ROUTE_DATUM_MISMATCH`); a same-node wire needs both allowance datums equal and on that node's kind; `terminal_tip` removed from the datum list (D15, a spec deviation); the migration test matrix covers evidence, approvals and rejections; batch tests cover old allowance payloads and opaque old evidence values.
 - 28 Sep 2026, Task 4 execution: no deviations from the task-4 brief. Fixture, tests, implementation and docs match the brief's exact code and text verbatim.
+- 28 Sep 2026, final fix wave (whole-branch review plus codex astra, F1 to F8): F1 `derive_bom` no longer counts a cut length of 0 or less as wire quantity (unknown instead). F2 the reversed-segment join test in `topology.test.ts` now gives `s2` a different datum at each end so reversing its storage is a real check. F3 added coverage for an unknown datum on the leaving side of an internal join, in both `topology.test.ts` and `completeness.test.ts`. F4 `migrate_v1_to_v2` now returns `MigrationStats`, and `load_document` logs `document migrated` with `{ from, to, ...stats }`. F5 `LoadResult`'s ok variant gained `migrated_from` (D12). F6 `trusted_length_origins` is typed `ReadonlySet<Origin>`; `M_LENGTH_DATUM_UNKNOWN` now names the node id next to the side. F7 this doc's header, checkboxes and this bullet. F8 `todo.md` bookkeeping for this wave and the deferred minors.

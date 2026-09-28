@@ -61,7 +61,9 @@ Data flow: file -> parse + migrate -> doc -> command batches -> validate -> deri
 ## Evidence and review
 - Field-level: each value can carry origin (measured | documented | inferred | assumed) + source asset/page/bbox, and a separate review status (unreviewed | approved | rejected) tied to the document revision it approved.
 - Changing a value invalidates its approval. Approving an inference never turns it into "measured".
-- Lengths: nominal_mm or null, tol_mm, datum, origin.
+- Lengths: nominal_mm or null, tol_mm, datum, origin. As implemented in schema v2 (plus/minus
+  tolerance bands, a datum per segment end, an estimate range and signed per-end allowances),
+  see `docs/data_model.md` and `docs/28092026_length_capture_plan.md`.
 
 ## Command log contract
 - Batch: batch_id, document_id, command schema version, expected_revision, list of commands; applied atomically or rejected whole.

@@ -55,8 +55,15 @@
 - [x] Task 2: migration from schema_version 1 to 2, maps values exactly, invents nothing, refuses to repair
 - [x] Task 3: structural checks `S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`
 - [x] Task 4: build-level completeness rules (`M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`), enriched synthetic fixture (photo evidence, documented and assumed length evidence, an estimate a documented length falls outside, an unknown beyond-datum allowance)
+- [x] Final fix wave (28 Sep 2026, whole-branch review plus codex astra, F1 to F8): BOM never counts a non-positive cut length as wire quantity; reversed-segment join test actually discriminates its ends; unknown datum on the leaving side of an internal join is covered (topology and completeness); migration returns `MigrationStats` and `load_document` logs `document migrated`; `LoadResult` carries `migrated_from`; `trusted_length_origins` typed `Origin`, `M_LENGTH_DATUM_UNKNOWN` names the node id; plan doc, data_model.md, c4model.md, index.md and design doc updated; this bookkeeping
 - [ ] M2 CLI and M4 web: discard pending batches and undo stacks after a migration
 - [ ] M4 measure mode (prefill `default_datum`)
 - [ ] terminal part data: strip length, insertion depth
 - [ ] photo-assisted measurement spike (after M4)
 - [ ] rope method for new designs
+- [ ] reuse one `analyse_route` result per wire instead of recomputing it several times per wire (`derive/topology.ts`, `derive/wire_list.ts`, `validate/completeness.ts` each call it separately)
+- [ ] decide whether an unknown tolerance band should warn (`W_TOLERANCE_UNKNOWN`) instead of passing silently
+- [ ] `issues_at` in `migrate/v1_to_v2.ts` duplicates `schema/format_issues.ts`'s `format_issues`; share one helper
+- [ ] `values_of` and `canonical_json` typing in `migrate/v1_to_v2.ts` hide `undefined` (a missing field and an explicit `null` are not distinguished in the cache)
+- [ ] test gaps: `route_end_datums` with `null` and `[]` ends; same-node wrong kind at `end_a` (only `end_b` is covered); `S_DATUM_NODE_KIND` on `datum_b` (only `datum_a` is covered); `W_LENGTH_OUTSIDE_ESTIMATE` on an unrouted or out-of-scope segment; migration malformed-case assertions are loose prefix matches, not exact; `value_json`/`reviewed_value_json` that is not JSON; non-array collections in the raw document; a migrated v1 document has no structural issues (`validate_structure` on the migrated golden)
+- [ ] fix the `Photos:` label formatting in `docs/data_model.md`
