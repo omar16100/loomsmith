@@ -2,7 +2,7 @@ import { analyse_route, check_route_datums, cut_length, route_length, unknown_al
 import { build_index, type DocIndex } from "../model/doc_index.ts";
 import { all_harnesses, in_scope, type ScopeOptions } from "../model/scope.ts";
 import type { LoomDocument } from "../schema/document.ts";
-import type { PartUse } from "../schema/primitives.ts";
+import type { Origin, PartUse } from "../schema/primitives.ts";
 import { entity_path, sort_issues, type Issue, type IssueSeverity } from "./issue.ts";
 import { evidence_state, latest_review, review_state } from "./review_state.ts";
 
@@ -70,7 +70,7 @@ function check_wires(doc: LoomDocument, index: DocIndex, options: ScopeOptions, 
 }
 
 // Origins that make a segment length buildable. inferred and assumed values are proposals, even when approved.
-const trusted_length_origins: ReadonlySet<string> = new Set(["measured", "documented"]);
+const trusted_length_origins: ReadonlySet<Origin> = new Set(["measured", "documented"]);
 
 function check_lengths(doc: LoomDocument, index: DocIndex, options: ScopeOptions, emit: Emit): void {
   const trusted = new Set<string>();
@@ -87,7 +87,10 @@ function check_lengths(doc: LoomDocument, index: DocIndex, options: ScopeOptions
     if (!in_scope(options, s.harness_id)) continue;
     const path = entity_path("segments", s.id, "length");
     if (routed.has(s.id)) {
-      const unmarked = [s.length.datum_a === null ? "node_a" : null, s.length.datum_b === null ? "node_b" : null].filter((side) => side !== null);
+      const unmarked = [
+        s.length.datum_a === null ? `node_a (${s.node_a})` : null,
+        s.length.datum_b === null ? `node_b (${s.node_b})` : null,
+      ].filter((side) => side !== null);
       if (unmarked.length > 0) {
         emit("M_LENGTH_DATUM_UNKNOWN", "error", `segment ${s.id} does not say where it was measured to at ${unmarked.join(" and ")}`, path, s.id, "record datum_a and datum_b (for example connector_back_face, breakout_centre)");
       }
