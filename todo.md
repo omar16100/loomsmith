@@ -5,18 +5,17 @@
 - [x] Repo init: git init, branch feat/m0_m1_core
 - [x] LICENSE Apache-2.0 (canonical text, sha256 cfc7749b...)
 - [x] docs/27092026_loomsmith_design.md, docs/c4model.md, docs/index.md, THIRD_PARTY_NOTICES.md
-- [x] docs/27092026_loomsmith_plan.md (implementation plan, codex reviewed + findings applied)
+- [x] docs/27092026_loomsmith_plan.md (implementation plan, reviewed by codex before execution)
 - [x] Workspace scaffold (pnpm, tsconfig, vitest, CI)
-- [x] parsnip entity
 
 ## Later milestones
-- [x] M1 model draft + golden synthetic fixture: `@loomsmith/core` (schema, command log, structural and completeness validation, evidence/review state, routes and cut lengths, nets, SRS-safe bench test data, wire list, BOM), 99 tests pass (12 files), branch `feat/m0_m1_core`
-- [ ] M1b owner: pick LS400 sub-harness, photos + measurements
+- [x] M1 model draft + golden synthetic fixture: `@loomsmith/core` (schema, command log, structural and completeness validation, evidence/review state, routes and cut lengths, nets, bench test data with model-based SRS exclusions, wire list, BOM), branch `feat/m0_m1_core`
+- [ ] M1b owner: pick a sub-harness of the owner's pilot vehicle (a 1990s car), photos + measurements
 - [ ] M2 CLI
 - [ ] M3 ingest spike
 - [ ] M4 web editor
 - [ ] M5 ingest v1
-- [ ] M6 LS400 pilot
+- [ ] M6 pilot build (the owner's pilot vehicle)
 
 ## M1 final review fixes (27 Sep 2026)
 - [x] F1 bench test data fails closed: `derive_test_data` returns `{ ok, data }` or `{ ok: false, problems }` (unknown harness/mating/connector, mating crossing the boundary, structural errors); SRS/listed connectors exclude a net whatever harness they are in; shared `active_matings`; `untestable_net_ids`; no ":" in labels
@@ -30,7 +29,7 @@
 ## Deferred from M1 review (27 Sep 2026)
 - [x] M1b schema-freeze checklist: nullable allowances (unknown strip/service length) instead of forced numbers (schema v2: per-end `{ datum, beyond_datum_mm }`, `service_loop_mm`, all nullable)
 - [ ] M1b schema-freeze checklist (remaining): move `applied_batch_ids` idempotency history out of the document into the log/store (SaaS); length `origin` lives on evidence (spec said on the length); approvals bound to value, not revision (documented decision); batch actor field for SaaS; `format`/`schema_version` position in canonical file; public index exports internal helpers
-- [ ] M2: isolation checks are O(N^2) (3000 nets gave 4.5M checks): switch to one check per net against all other nets tied together, or make the pairwise matrix opt-in, before worksheet export
+- [ ] M2: isolation checks are O(N^2) (3,000 testable nets require 4,498,500 pairwise isolation checks): switch to one check per net against all other nets tied together, or make the pairwise matrix opt-in, before worksheet export
 - [ ] M2: repair fingerprint rejects genuine improvements (e.g. overfilled contact 3 -> 2 ends) because it compares raw messages
 - [ ] M2: `batch_id` reuse with different content is accepted as a no-op (store a content hash)
 - [ ] Later: review warnings ignore harness scope
@@ -71,3 +70,4 @@
 ## Open-source publication (02 Oct 2026)
 - [x] Repo-relative paths in docs (local machine paths removed; private references described in words)
 - [x] README added
+- [x] Removed unsourced claims, OEM manual details and private references from docs and comments; bench test wording describes model rules, not physical safety; survey entries cite upstream repos; dependency licences in THIRD_PARTY_NOTICES.md; root package.json licence field

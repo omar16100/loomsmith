@@ -60,7 +60,7 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
   for (const s of doc.splices) if (in_scope(options, s.harness_id)) add_part("splice", s.part);
   for (const w of doc.wires) {
     if (!in_scope(options, w.harness_id)) continue;
-    // Group by the nominal designation ("0.5 mm2", "20 AWG", Toyota "0.5") as written, never by area alone.
+    // Group by the wire designation exactly as written ("0.5 mm2", "20 AWG"), never by area alone.
     const size = w.spec.designation ?? `${w.spec.cross_section_mm2 ?? "UNKNOWN"} mm2`;
     const description = `${size} ${colour_code(w.spec)}${w.spec.insulation === null ? "" : ` ${w.spec.insulation}`}`;
     const key = `wire|${w.spec.cross_section_mm2 ?? "unknown"}|${description}`;

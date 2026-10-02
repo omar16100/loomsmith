@@ -50,8 +50,7 @@ export interface BoundaryProblem {
   message: string;
 }
 
-// Fail closed: any boundary problem means no test data at all, so a typo or a half-scoped mating can never
-// yield an isolation check whose path physically reaches an SRS circuit.
+// Fail closed: any boundary problem (a typo, a half-scoped mating) returns problems instead of test data.
 export type TestDataResult = { ok: true; data: TestData } | { ok: false; problems: BoundaryProblem[] };
 
 function check_boundary(doc: LoomDocument, boundary: TestBoundary, index: DocIndex): BoundaryProblem[] {
@@ -86,7 +85,7 @@ function check_boundary(doc: LoomDocument, boundary: TestBoundary, index: DocInd
 }
 
 // An endpoint on an excluded connector (listed, or SRS unless include_srs) excludes its whole net, whichever
-// harness that connector is in: scope never weakens SRS protection.
+// harness that connector is in: the harness scope never narrows this connector-exclusion rule.
 export function is_excluded_endpoint(index: DocIndex, boundary: TestBoundary, key: string): boolean {
   if (!key.startsWith("contact:")) return false;
   const k = index.contacts.get(key.slice("contact:".length));
@@ -119,8 +118,8 @@ export function derive_test_data(doc: LoomDocument, boundary: TestBoundary, inde
     }
     return null;
   };
-  // A net that touches an excluded connector (SRS by default) is an excluded circuit: it gets no continuity or
-  // isolation check at all, so no test voltage reaches it.
+  // A net that touches an excluded connector (SRS by default) is an excluded circuit: the generated data has no
+  // continuity or isolation check for it at all.
   const test_nets: TestNet[] = [];
   const excluded_net_ids: string[] = [];
   const excluded_points = new Set<string>();

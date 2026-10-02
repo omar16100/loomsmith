@@ -2,8 +2,8 @@
 
 Category: Architecture. Source of truth for containers, components, dependencies and data flows. Update on every architecture change. Design rationale: [27092026_loomsmith_design.md](27092026_loomsmith_design.md).
 
-Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`, 99 tests
-pass; `packages/cli`, `packages/ingest`, `apps/web`, `eval/` are still target architecture,
+Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`;
+`packages/cli`, `packages/ingest`, `apps/web`, `eval/` are still target architecture,
 not built).
 
 ## Level 1: system context
@@ -13,7 +13,7 @@ not built).
 | Harness builder (DIY, classic car owner, small harness shop) | Designs or rebuilds harnesses in the web editor or CLI |
 | Coding agent (Claude Code) | Drives the CLI (`apply`, `validate`, `export`) with JSON command batches; later an MCP server |
 | LLM provider (Anthropic API) | Called only by the CLI `ingest` command in v1, with the user's own key |
-| Wiring diagram PDFs (e.g. Toyota EWD) | Input to ingest; stay on the user's machine; referenced by hash |
+| Wiring diagram PDFs (e.g. an OEM electrical wiring diagram book) | Input to ingest; stay on the user's machine; referenced by hash |
 | Harness shop / continuity tester | Consumes exported wire list, BOM, test data |
 | Future loomsmith cloud (private repo, not built) | Sync, teams, sharing; would reuse the core and the command log |
 
@@ -21,7 +21,7 @@ not built).
 
 | Container | Tech | Responsibility | Depends on | Status |
 |---|---|---|---|---|
-| `packages/core` | TypeScript, zod v4, no DOM/fs/network/clock/RNG | Schema, command log reducer, validation, derivations, exports as strings, migrations, asset manifest, logger interface | none at runtime except zod | **Implemented (M1)** |
+| `packages/core` | TypeScript, zod v4, no DOM/fs/network/clock/RNG | Schema, command log reducer, validation, derivations, migrations, asset manifest, logger interface (export renderers are planned, see `export/` below) | none at runtime except zod | **Implemented (M1)** |
 | `packages/cli` | Node 22+ | File IO, id/timestamp generation, commands `validate`, `migrate`, `export`, `new`, `apply`, `ingest` | core, ingest | Not built (M2) |
 | `packages/ingest` | TypeScript, pdf.js, Anthropic SDK (M3/M5) | PDF parse -> candidate graph -> LLM resolution -> proposals file | core | Not built (M3/M5) |
 | `apps/web` | Vite, React, SVG | Editor, IndexedDB autosave, File System Access API, proposal review | core | Not built (M4) |
@@ -61,8 +61,8 @@ for the file format, entity fields, validation codes and derivation rules.
 ## Invariants
 
 - Derived data is never stored in the document.
-- The reducer is deterministic: core reads no Node or DOM API (the core tsconfig has `types: []` and `lib: ["ES2023"]`) and no clock or RNG (checked by the ast-grep purity scan run before each milestone commit, not yet in CI), and the same doc + batch gives the same canonical output within one runtime (tested in Node). Byte-identical output across Node and the browser is a design goal to be verified in M4, when the web editor exists; it is not yet a tested fact.
+- The reducer is deterministic: core reads no Node or DOM API (the core tsconfig has `types: []` and `lib: ["ES2023"]`) and no clock or RNG (an ast-grep purity scan of `packages/core/src` is a required check before each milestone commit; it is not yet in CI), and the same doc + batch gives the same canonical output within one runtime (tested in Node). Byte-identical output across Node and the browser is a design goal to be verified in M4, when the web editor exists; it is not yet a tested fact.
 - Credentials never appear in documents, command logs, autosave or logs.
-- OEM-derived data never lives in this repo.
+- Policy: OEM-derived data is never committed to this repo.
 - Unknown is never 0: an unknown segment length, datum or allowance makes every cut length that depends on it unknown; datums are checked along the whole route and never converted; a routed length is buildable only with current measured or documented evidence.
 - Migrations never repair data and never change whether an evidence row or review is current.

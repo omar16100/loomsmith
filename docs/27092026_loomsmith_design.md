@@ -3,9 +3,9 @@
 Category: Design / spec. Status: approved by owner 27 Sep 2026 (plan-mode approval). Source plan: the approved design notes (not in this repo). Reviews: an external review (codex, gpt-6-astra) rounds 1 and 2, 27 Sep 2026 (not in this repo).
 
 ## Context
-- Need: 1990 Lexus LS400 UCF10R (Europe RHD) has no purchasable replacement harness and its exact EWD (EWD080Y) is out of print (both documented in the owner's private vehicle project, not in this repo). Paid tools are $219+/mo or quote-only; ~20 open-source tools each do one part well, none does the whole job (Appendix).
+- Need: a tool that supports harness design and repair (rebuilding an existing loom, designing a new one). Pilot: the owner's pilot vehicle (a 1990s car); its data stays outside this repo. The open-source tools reviewed each cover part of the workflow (Appendix).
 - Owner decisions: general tool (rebuild existing looms + design new) for the DIY/classic-car community; shared core + CLI + web editor from day one; TypeScript everywhere; may become a SaaS; LLM option that turns schematic diagrams into a harness model; "think from first principles, pick the best options".
-- Reviews: codex astra (gpt-6-astra) round 1 (direction) and round 2 (this plan), 27 Sep 2026; all findings folded in.
+- Reviews: codex astra (gpt-6-astra) round 1 (direction) and round 2 (this plan), 27 Sep 2026.
 
 ## First principles
 1. One model, many views. Schematic, assembly drawing, wire/cut list, BOM, test data, exports all derive from one document; derived data is never stored as editable truth.
@@ -18,29 +18,30 @@ Category: Design / spec. Status: approved by owner 27 Sep 2026 (plan-mode approv
 ## Decisions
 | Topic | Decision | Why |
 |---|---|---|
-| Approach | Fresh monorepo; borrow MIT code only, notices kept in THIRD_PARTY_NOTICES.md | 0xDevDav reconstructs wires from table rows (no wire ids, free-text lengths); reshaping = major refactor |
-| Reuse | MIT: 0xDevDav (geometry/formboard rendering ideas), harness-studio (validator message style), e-Plan (deterministic Dijkstra). GPL/AGPL/PolyForm/unlicensed: ideas only, clean-room, no code or data | licence boundaries checked by codex (HarnessDesigner DB is GPL-2.0) |
-| Name | `loomsmith` working codename (0 GitHub repos, npm free, .com taken) | `openwiringharness` clashes with lukebikes/OpenWiringHarness (AGPL); fork github.com/omar16100/openwiringharness left untouched |
-| Licence | Apache-2.0 for core/CLI/web; no CLA; future paid cloud in a separate private repo; future parts data CC-BY-4.0 | explicit patent grant + termination, allows proprietary cloud, compatible with borrowed MIT code (codex r2) |
-| OEM data | LS400/EWD-derived data never in the public repo; lives in the owner's private vehicle project | service manuals are copyrighted |
+| Approach | Fresh monorepo; borrow MIT code only, notices kept in THIRD_PARTY_NOTICES.md | 0xDevDav/harness-designer infers wires from table rows; reshaping it around a wire model would be a major refactor |
+| Reuse | MIT: 0xDevDav/harness-designer (cavity table and cut length ideas), harness-studio (validation ideas), electrical-plan-editor (routing ideas). GPL/AGPL/PolyForm/unlicensed: policy is ideas only, no code or data copied | keeps copied code compatible with Apache-2.0; licences per project in the Appendix |
+| Name | `loomsmith` working codename | the name `openwiringharness` would clash with [lukebikes/OpenWiringHarness](https://github.com/lukebikes/OpenWiringHarness) (AGPL-3.0) |
+| Licence | Apache-2.0 for core/CLI/web; no CLA; future paid cloud in a separate private repo; future parts data CC-BY-4.0 | explicit patent grant + termination ([licence text](https://www.apache.org/licenses/LICENSE-2.0.txt)), allows proprietary cloud, compatible with borrowed MIT code ([ASF licence categories](https://www.apache.org/legal/resolved.html)), MIT notices kept |
+| OEM data | Policy: OEM wiring diagram (EWD) and service manual content is never committed to this repo; vehicle data lives outside this repository | project policy |
 | Stack | TS strict, pnpm workspaces, Node 22+, Vitest, Vite + React + SVG, zod v4 (types + runtime validation + generated JSON Schema), Playwright | one schema source; static offline web app |
 | Format | JSON `*.loom.json`; `format: "loomsmith"`, integer `schema_version`, explicit migrations, reject future versions; opaque tenant-independent ids + human labels; canonical ordering of unordered collections (meaningful sequences like routes keep order) | clean diffs, agent-friendly, sync-ready |
-| Units | `length_mm`, `cross_section_mm2`, `current_a`, `voltage_v`, `temperature_c`; original designation kept ("20 AWG", Toyota "0.5") | nominal sizes are not interchangeable by area |
+| Units | `length_mm`, `cross_section_mm2`, `current_a`, `voltage_v`, `temperature_c`; original wire designation kept as written (e.g. "20 AWG", "0.5 mm2") | preserve the original wire designation; never re-derive it from the area |
 | Naming | snake_case files, functions, variables, JSON keys; PascalCase types | owner rule |
 | Logging | injected structured logger in core; CLI `--verbose`/`--json`; web debug toggle; never logs credentials | owner rule |
 | Privacy | telemetry off by default; API keys never in documents, command logs, autosave or diagnostics | SaaS-ready trust |
 | Hosting (later) | web on Cloudflare Pages | existing infra |
 
 ## Architecture (becomes docs/c4model.md)
+Target file map. Entries marked (planned) do not exist yet; current status is in `docs/c4model.md`.
 ```
 loomsmith/
-  packages/core/src/   schema/ model/ commands/ validate/ derive/ export/ migrate/ assets/ log.ts
-  packages/cli/        loomsmith validate | migrate | export | new | apply | ingest
-  packages/ingest/     PDF parse -> candidate graph -> LLM resolution -> proposals file
-  apps/web/            editor (+ proposal review)
+  packages/core/src/   schema/ model/ commands/ validate/ derive/ migrate/ log.ts; export/ assets/ (planned)
+  packages/cli/        (planned) loomsmith validate | migrate | export | new | apply | ingest
+  packages/ingest/     (planned) PDF parse -> candidate graph -> LLM resolution -> proposals file
+  apps/web/            (planned) editor (+ proposal review)
   examples/synthetic_milestone/   golden fixture (synthetic, labelled as such)
-  eval/                ingest spike fixtures + metrics (OEM pages referenced by hash, not committed)
-  docs/  index.md c4model.md 27092026_loomsmith_design.md 27092026_loomsmith_plan.md data_model.md ingest.md
+  eval/                (planned) ingest spike fixtures + metrics (OEM pages referenced by hash, not committed)
+  docs/  index.md c4model.md 27092026_loomsmith_design.md 27092026_loomsmith_plan.md data_model.md; ingest.md (planned)
   todo.md  LICENSE  THIRD_PARTY_NOTICES.md
 ```
 Data flow: file -> parse + migrate -> doc -> command batches -> validate -> derive -> export/render.
@@ -82,35 +83,35 @@ Each issue: code, severity, JSON path, entity id, fix hint.
 Test data derivation takes: selected harness(es), mating state per mating (connected | disconnected), excluded external components/circuits (SRS excluded by default). Output: expected continuity per net and isolation between nets for that bench setup, plus printable worksheet.
 
 ## LLM "schematic to harness" (sub-project 2)
-- Input: local 1992 EWD PDFs (from the owner's private vehicle project, not in this repo; 59 vector PDFs; EWD-102 p3 = "INTERIOR LIGHT" with D3, L8, "12 BM3", G–W, no embedded rasters; confirmed by codex r2).
+- Input: a vintage OEM wiring diagram book (vector PDF) supplied by the user; it stays on the user's machine and is never committed to this repo.
 - Pipeline: pdf.js text items + drawing operators -> reconstruct transforms, normalise overlapping strokes, separate symbols from conductors -> candidate graph (keep ambiguity, never merge nets prematurely) -> LLM resolves label ownership, off-page continuations, splices, grounds, harness assignment -> proposals file (commands + page/bbox citations, origin inferred) -> core validate -> bounded repair loop -> review in web (source crop beside each item; accept/edit/reject).
-- Scope limit: EWDs give connectivity and harness assignment, not lengths; physical layer comes from measuring the loom.
-- Known hard cases to test first: conductors crossing without a junction marker (e.g. EWD-102 p3, branch from B39 toward BX1 crossing the conductor to BV1), striped conductors drawn as multiple strokes, lines inside component symbols, off-page continuations.
+- Scope limit: ingest proposes connectivity and harness assignment only; physical lengths are entered from measurements of the loom.
+- Known hard cases to test first: conductors crossing without a junction marker (synthetic example: on a test page drawn for this purpose, the branch from splice S1 to connector C2 crosses the conductor from C1 to C3 with no junction dot, so the two nets must stay separate), striped conductors drawn as multiple strokes, lines inside component symbols, off-page continuations.
 - Eval: overlay candidates on the page; measure candidate-graph recall separately from LLM resolution. Track connection precision/recall, false net merges, abstentions, citation correctness, correction time vs manual entry.
 - Gates: spike (5 pages, 2 held out) go if precision >= 0.95 and recall >= 0.85 AND review+correction is faster than manual entry. Before M5 release: 15-20 varied pages, hundreds of endpoint connections, whole circuit groups held out.
-- Models: provider adapter; defaults Claude Opus 5.5 (`claude-opus-5-5`) for resolution, Sonnet 5 (`claude-sonnet-5`) for cheap passes; API details checked against the claude-api reference at implementation. v1: provider calls from CLI only (key via env var); web only reviews proposals. SaaS later: metered server side.
+- Models: provider adapter; default provider an LLM (Claude models, see the [model overview](https://platform.claude.com/docs/en/models/overview)); the model per pass is chosen at implementation against that documentation. v1: provider calls from CLI only (key via env var); web only reviews proposals. SaaS later: metered server side.
 - Later: raster (scanned) pages via vision; MCP server over the command API.
 
 ## Milestones
-- M0 scaffold: this repo, git init, feature branch, docs (index, c4model, design, plan), todo.md, Apache-2.0 LICENSE, CI config, parsnip entity.
+- M0 scaffold: this repo, git init, feature branch, docs (index, c4model, design, plan), todo.md, Apache-2.0 LICENSE, CI config.
 - M1 model draft: zod schema + command log + validation + derivations; golden synthetic fixture (splice, repeated colours, unknown measurement, unknown wire spec, double-wire termination, base/stripe colours, terminal/seal quantities, mated connectors across two harnesses, schematic-only wire).
-- M1b pre-freeze check: owner picks one bounded LS400 sub-harness and captures photos + measurements; model it by hand (connections from EWD, lengths measured) in the owner's private vehicle project. Schema frozen only when fixture + LS400 model both fit.
+- M1b pre-freeze check: owner picks one bounded sub-harness of the owner's pilot vehicle (a 1990s car) and captures photos + measurements; model it by hand (connections from the wiring diagram, lengths measured) outside this repo. Schema frozen only when the fixture and the pilot model both fit.
 - M2 CLI: validate, migrate, export (wire_list.csv, bom.csv, test_data.csv, test_worksheet.html, assembly.svg), new, apply; `--json`.
-- M3 ingest spike (parallel with M2, before substantial web work): 5 LS400 EWD pages, candidate overlay, hand labels, metrics, go/no-go report; fixtures and eval artifacts kept in eval/.
+- M3 ingest spike (parallel with M2, before substantial web work): 5 pages of a vintage OEM wiring diagram book (vector PDF), candidate overlay, hand labels, metrics, go/no-go report; fixtures and eval artifacts kept in eval/.
 - M4 web editor v1: open/save (File System Access API + download fallback), IndexedDB autosave + crash recovery, tables (connectors, cavities, contacts, wires, segments), SVG topology view, issues panel, undo/redo, exports via core.
 - M5 ingest v1 (if go): `loomsmith ingest` produces proposals; web review UI; expanded eval set.
-- M6 LS400 pilot: build outputs for the M1b sub-harness, bench continuity check against worksheet.
-- Later: electrical analysis (source/load/protection, voltage drop incl. return path, derating, "no supported size" never silently capped), parts library + fit checks, 1:1 tiled formboard print, tester adapter (e.g. Cirris), KBL/VEC subset for a named recipient (specs MIT via ProSTEP ecad-wiki), AI edit panel, MCP server, supplier fetch via CLI, cloud sync / teams (SaaS).
+- M6 pilot: build outputs for the M1b sub-harness, bench continuity check against worksheet.
+- Later: electrical analysis (source/load/protection, voltage drop incl. return path, derating, "no supported size" never silently capped), parts library + fit checks, 1:1 tiled formboard print, tester adapter (e.g. Cirris), KBL/VEC subset for a named recipient (the VEC and the ecad-wiki content are published under MIT unless stated otherwise for specific content, per [prostep-ivip-e-V/vec](https://github.com/prostep-ivip-e-V/vec); some example files carry other licences, see [ecad-wiki samples](https://ecad-wiki.prostep.org/sample/)), AI edit panel, MCP server, supplier fetch via CLI, cloud sync / teams (SaaS).
 
 ## Out of v1
 3D, autorouting, automatic gauge/fuse selection, distributor fetch, variants, raster OCR, browser-side LLM calls, plugins, inventory, VEC/KBL, accounts/cloud, CRDT merging.
 
 ## Risks
-- Vehicle evidence: build/market/options (TRC unconfirmed) recorded before deriving wiring.
+- Vehicle evidence: build/market/options recorded before deriving wiring.
 - Connector orientation never inferred from mirrored renders.
-- 1990 Sumitomo/Yazaki parts: identification, compatibility and procurement tracked separately.
+- Connector parts: identification, compatibility and procurement tracked separately.
 - LLM false connection that passes validation: crossing tests, citations, held-out circuit groups, human approval.
-- Continuity pass does not prove crimp quality; SRS excluded from default tests.
+- Generated test data covers continuity and isolation only; crimp quality is outside its scope. SRS connectors are excluded from the default generated test data.
 - Owner availability for M1b loom inspection (physical access to the car).
 
 ## Verification
@@ -118,15 +119,17 @@ Test data derivation takes: selected harness(es), mating state per mating (conne
 - Golden fixture snapshots of every export; CLI e2e diff against golden files.
 - Playwright: open fixture -> edit -> export equals CLI export for the same revision.
 - Ingest: eval report per model/prompt version on held-out pages.
-- LS400 pilot: multimeter continuity check against the worksheet for the chosen bench setup.
+- Pilot: multimeter continuity check against the worksheet for the chosen bench setup.
 - Codex astra review each milestone; docs (index, c4model, plan, todo) updated each milestone.
 
 ## Process
-- After approval: save codex r1/r2 outputs outside this repo; write docs/27092026_loomsmith_design.md (spec) and the implementation plan (writing-plans) as docs/27092026_loomsmith_plan.md; register in docs/index.md.
+- After approval: save codex r1/r2 outputs outside this repo; write docs/27092026_loomsmith_design.md (spec) and the implementation plan as docs/27092026_loomsmith_plan.md; register in docs/index.md.
 - Git: local repo, feature branches, codex review before commits; GitHub repo creation (private) and any publishing only after owner OK.
 
-## Appendix: survey highlights (25 Sep 2026, verified via gh api)
-- Visual: 0xDevDav/harness-designer MIT (autolinked cavity tables, validate, cut lengths; wires inferred from table rows); HarnessDesigner GPL-2.0 (parts DB GPL-2.0, DRC, pegboard); AlexAgo83/electrical-plan-editor MIT (Dijkstra routing, sizing with silent 120 mm2 cap, multi-harness, AI panel); DIGIWIRE MIT (Excel to Draw.io); harnessIT MIT; simple_harness GPL-3.0; HarnessForge no licence.
-- Code-first: almond-bot/harness-studio MIT (segment lengths, validator with JSON path + hint; tree-only topology); WireViz GPL-3.0; cableviz GPL-3.0 (tolerances); loome PolyForm NC (stable wire ids, fuse schedule, builder checklist); cable-designer GPL-3.0 (current -> gauge within terminal range).
-- Add-ons: WireViz Studio, WireForm, wireviz-mcp (GPL-3.0); inventree-wireviz MIT; HarnessHelper AGPL.
-- Standards (session ls400-66): KBL VDA 4964, VEC VDA 4968, STEP AP242 ed2, IPC/WHMA-A-620, ISO 6722, USCAR-2/21, DIN 72552.
+## Appendix: other tools reviewed (survey 25 Sep 2026)
+Licences and features as stated in each linked upstream repository; they may change upstream.
+- Visual: [0xDevDav/harness-designer](https://github.com/0xDevDav/harness-designer) MIT (autolinked cavity tables, validation, cut lengths; wires inferred from table rows); [HarnessDesigner](https://github.com/HarnessDesigner/HarnessDesigner) GPL-2.0 (parts database, pegboard); [AlexAgo83/electrical-plan-editor](https://github.com/AlexAgo83/electrical-plan-editor) MIT (routing, multiple harnesses, AI panel); [harnessIT](https://github.com/cheeze36/harnessIT) MIT.
+- Code-first: [almond-bot/harness-studio](https://github.com/almond-bot/harness-studio) MIT (segment lengths, validation, tree topology); [WireViz](https://github.com/wireviz/WireViz) GPL-3.0; [cableviz](https://github.com/delta-being/cableviz) GPL-3.0 (tolerances); [loome](https://github.com/erik-hasse/loome) PolyForm Noncommercial 1.0.0 ([licence file](https://raw.githubusercontent.com/erik-hasse/loome/main/LICENSE.md)) (stable wire ids, fuse schedule, builder checklist).
+- Add-ons: [WireForm](https://github.com/Garth-42/WireForm) GPL-3.0-only; [wireviz-mcp](https://github.com/chrisflesher/wireviz-mcp) GPL-3.0; inventree-wireviz MIT ([package metadata](https://github.com/inventree/inventree-wireviz/blob/main/setup.py)); [HarnessHelper](https://github.com/lukebikes/HarnessHelper) AGPL-3.0.
+- Standards: KBL, VDA 4964 ([ecad-wiki](https://ecad-wiki.prostep.org/specifications/kbl/)); VEC, VDA 4968 ([ecad-wiki](https://ecad-wiki.prostep.org/specifications/vec/)).
+- Possible future references (not used yet; publisher links and editions to be added before any technical use): STEP AP242 ed2, IPC/WHMA-A-620, ISO 6722, USCAR-2/21, DIN 72552.

@@ -14,7 +14,7 @@ documents only
 what the code in [packages/core/src](../packages/core/src) does; it is not a
 design proposal. Source of truth for each section is the file named in that section.
 
-Last verified: 28 Sep 2026, against branch `feat/length_capture`, 137 passing tests (14 files).
+Last checked against the code: 28 Sep 2026 (schema v2).
 
 ## 2. File format
 
@@ -110,6 +110,12 @@ One row per collection, fields from `document.ts`.
 | `evidence` | `id`, `entity_id`, `field`, `origin` (`measured`\|`documented`\|`inferred`\|`assumed`), `value_json`, `source` (`{ asset_id, page_index, bbox }` or `null`), `note` |
 | `reviews` | `id`, `entity_id`, `field`, `status` (`approved`\|`rejected`), `reviewed_value_json`, `revision` |
 | `view_positions` | `id`, `x`, `y` |
+
+**Asset locators**: in this repo, `synthetic://` locators are placeholders used only by the synthetic
+fixtures and tests (`packages/core/test/` and `examples/synthetic_milestone/`); they never resolve to a file,
+and no such file exists in this repo. The `sha256` values of those fixture assets are hashes of short
+placeholder text (`loomsmith synthetic fixture asset`, `loomsmith synthetic photo asset`), not of PDF
+or image bytes.
 
 Shared substructures (`primitives.ts`):
 - **part use**: `{ part_id (id or null), identification (identified\|candidate\|unknown), compatibility (compatible\|incompatible\|unknown), procurement (available\|unavailable\|reused\|unknown) }`.
@@ -319,8 +325,8 @@ here is stored in the document.
   - `unknown_connector`: an `excluded_connector_ids` entry is not a connector in the
     document.
   - `mating_crosses_boundary`: a mating declared `connected` has exactly one of its two
-    connectors in scope (the bench would otherwise test a path that leaves the boundary,
-    for example through an unmodelled SRS connector).
+    connectors in scope (the generated checks would otherwise include a path that leaves the
+    boundary, for example to an SRS connector outside it).
   - `structural_errors` (`id: null`): `validate_structure` reports any issue; the message
     gives the count.
 
@@ -330,7 +336,10 @@ here is stored in the document.
   `safety_class: "srs"` connector unless `include_srs: true`) is excluded **whole**,
   whichever harness that connector is in (`is_excluded_endpoint`): it gets no continuity or
   isolation check at all (`excluded_net_ids`, `excluded_points`), not just the
-  SRS/excluded probe points, so no test voltage reaches an SRS circuit. Probe points are
+  SRS/excluded probe points: the function omits every check for a net that contains an
+  excluded connector of the model. These are rules about the generated data only, and they
+  assume the optional `index` argument was built from the same document (a stale
+  caller-supplied index is an open item in `todo.md`). Probe points are
   in-scope contacts, labelled `<connector label>:<cavity label>`, and in-scope ground
   points, labelled with the ground point label (labels cannot contain `:`, so these never
   collide). A contact on a connector that has been mated away (its mating is active) is

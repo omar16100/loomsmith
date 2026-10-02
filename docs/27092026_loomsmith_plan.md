@@ -1,6 +1,8 @@
 # loomsmith M0 + M1 Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> Historical record: this is the M1 plan as executed. It describes the old schema_version 1 format and its generated `loomsmith_document_v1.schema.json`, which schema v2 replaced; the current format is in [data_model.md](data_model.md).
+
+Steps use checkbox (`- [ ]`) syntax for tracking.
 
 Category: Plan / task record. Status section at the end.
 
@@ -2998,8 +3000,8 @@ export function derive_test_data(doc: LoomDocument, boundary: TestBoundary, inde
     }
     return null;
   };
-  // A net that touches an excluded connector (SRS by default) is an excluded circuit: it gets no continuity or
-  // isolation check at all, so no test voltage reaches it.
+  // A net that touches an excluded connector (SRS by default) is an excluded circuit: the generated data has no
+  // continuity or isolation check for it at all.
   const test_nets: TestNet[] = [];
   const excluded_net_ids: string[] = [];
   const excluded_points = new Set<string>();
@@ -3237,7 +3239,7 @@ export function derive_bom(doc: LoomDocument, options: ScopeOptions = all_harnes
   for (const s of doc.splices) if (in_scope(options, s.harness_id)) add_part("splice", s.part);
   for (const w of doc.wires) {
     if (!in_scope(options, w.harness_id)) continue;
-    // Group by the nominal designation ("0.5 mm2", "20 AWG", Toyota "0.5") as written, never by area alone.
+    // Group by the wire designation exactly as written ("0.5 mm2", "20 AWG"), never by area alone.
     const size = w.spec.designation ?? `${w.spec.cross_section_mm2 ?? "UNKNOWN"} mm2`;
     const description = `${size} ${colour_code(w.spec)}${w.spec.insulation === null ? "" : ` ${w.spec.insulation}`}`;
     const key = `wire|${w.spec.cross_section_mm2 ?? "unknown"}|${description}`;
@@ -3322,11 +3324,10 @@ PROMPT
 ```
 Review output saved outside this repo (not included here). Apply confirmed findings with a failing test first, rerun `CI=true pnpm check`.
 
-- [ ] **Step 5: Commit and record**
+- [ ] **Step 5: Commit**
 
 ```bash
 git add -A && git commit -m "docs: data model reference, c4 and plan status for M1"
-parsnip entity add --type project -o "loomsmith: open-source wiring harness tool, Apache-2.0" -o "M0+M1 core done 27 Sep 2026 on branch feat/m0_m1_core: schema, command log, validation, derivations" -o "spec docs/27092026_loomsmith_design.md, plan docs/27092026_loomsmith_plan.md" --tag loomsmith --tag wiring-harness --tag opensource -p loomsmith "loomsmith_project"
 ```
 
 ---
@@ -3353,7 +3354,7 @@ parsnip entity add --type project -o "loomsmith: open-source wiring harness tool
 - Generic `insert` / `update` / `delete` commands plus whole-document structural validation after each batch, instead of one handler per domain command. Keeps the command log small and sync-friendly; domain macros can expand to these later.
 - Reviews store `reviewed_value_json` (canonical json of the approved value), so staleness is derived and never needs a write.
 - Unlisted matings default to disconnected in bench test data and to the caller's choice in `derive_nets`.
-- An external review (codex) of this plan, 27 Sep 2026, confirmed all code typechecks and all fixture expectations; its design findings were applied:
+- Design changes made after an external review (codex) of this plan, 27 Sep 2026:
   - A net touching an SRS (or listed) connector is excluded whole from bench tests, not just its SRS probe points.
   - `identified` / `candidate` part uses must carry a `part_id` (`S_PART_IDENTITY`).
   - A valid document stays valid; an invalid one accepts only repair batches (`repair_required`), compared by key plus message so a worsening issue is caught.

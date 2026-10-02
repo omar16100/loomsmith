@@ -12,8 +12,8 @@ export const datum_node_kind: Readonly<Record<Datum, TopologyNode["kind"]>> = Ob
   ground_stud_centre: "ground",
 });
 
-// The usual measurement point per node kind (a connector is measured to its back face, where the wires leave the
-// housing). Editors prefill it; core never applies it silently.
+// The editor default datum per node kind (for a connector, its back face, where the wires leave the housing).
+// Editors prefill it; core never applies it silently.
 export const default_datum: Readonly<Record<TopologyNode["kind"], Datum>> = Object.freeze({
   connector: "connector_back_face",
   breakout: "breakout_centre",

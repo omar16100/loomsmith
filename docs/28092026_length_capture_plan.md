@@ -1,6 +1,6 @@
 # Length capture (schema v2) Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+Steps use checkbox (`- [ ]`) syntax for tracking.
 
 Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) after an external review (codex astra) round 1, 28 Sep 2026 (not in this repo). Branch `feat/length_capture` (from `main` ce77d35).
 
@@ -21,7 +21,7 @@ Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) af
 - Datum values, exactly: `connector_back_face`, `connector_mating_face`, `breakout_centre`, `clip_centre`, `grommet_centre`, `splice_centre`, `ground_stud_centre`.
 - New issue codes, exactly: `S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`, `M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`. New load error code: `migration_failed`.
 - `command_schema_version` stays `1`; batch JSON Schema file name stays `loomsmith_batch_v1.schema.json`.
-- Fixtures are synthetic; no OEM (Toyota) data in this repo.
+- Fixtures are synthetic; no OEM data in this repo.
 - No em dashes in code comments, docs or commit messages.
 - Commit messages: conventional prefix (`feat(core):`, `test(core):`, `docs:`), no `Co-Authored-By` trailer and no "Generated with" line.
 - Use `ast-grep` (not grep) for code search. Run `pnpm check` (typecheck plus all tests) before every commit; it must pass.
@@ -415,8 +415,8 @@ export const datum_node_kind: Readonly<Record<Datum, TopologyNode["kind"]>> = Ob
   ground_stud_centre: "ground",
 });
 
-// The usual measurement point per node kind (a connector is measured to its back face, where the wires leave the
-// housing). Editors prefill it; core never applies it silently.
+// The editor default datum per node kind (for a connector, its back face, where the wires leave the housing).
+// Editors prefill it; core never applies it silently.
 export const default_datum: Readonly<Record<TopologyNode["kind"], Datum>> = Object.freeze({
   connector: "connector_back_face",
   breakout: "breakout_centre",
@@ -1627,7 +1627,7 @@ git commit -m "feat(core): block unmeasured or unpinned lengths and unknown allo
 
 ## Verification
 
-- `pnpm check` green after every task; the final count is 99 plus the new tests, none removed.
+- `pnpm check` must pass after every task; no existing test is removed.
 - The migration tests prove: the M1 golden file loads; values survive exactly; cut lengths return to the v1 values once datums are recorded; evidence and reviews keep their states; malformed or ambiguous input is refused, never repaired.
 - Purity scan before the last commit: `ast-grep --pattern 'Date.now()' packages/core/src` and `ast-grep --pattern 'Math.random()' packages/core/src` return nothing; the core typecheck (`types: []`) rejects any `node:` import.
 - Codex astra review of the branch diff before merge; merge only when the owner says so.
@@ -1647,13 +1647,13 @@ git commit -m "feat(core): block unmeasured or unpinned lengths and unknown allo
 
 ## Status
 
-Planned 28 Sep 2026. Revision 2 after codex astra r1 (3 blocking, 4 should-fix, 1 nit, all addressed). Revision 3 after codex astra r2 (external review, not in this repo: 2 blocking, 2 should-fix, 1 nit, all addressed; r2 confirmed the r1 fixes, the arithmetic, issue order and type-checking at every task boundary). Codex astra r3 (external review, not in this repo): no runtime defect; one missing regression (unknown datum at an internal join) added to Tasks 1 and 4.
+Planned 28 Sep 2026. Revision 2 after an external review (codex astra r1), revision 3 after a second one (r2); a third (r3) led to a regression test for an unknown datum at an internal join in Tasks 1 and 4. The reviews are not in this repo.
 
-Done (28 Sep 2026). Tasks 1 to 4 implemented on branch `feat/length_capture`: schema v2, the v1-to-v2 migration, structural checks (`S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`) and the build-level completeness rules (`M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`) with the enriched synthetic fixture. `pnpm check` passes: 135 tests (14 files). Merge only when the owner says so.
+Done (28 Sep 2026). Tasks 1 to 4 implemented on branch `feat/length_capture`: schema v2, the v1-to-v2 migration, structural checks (`S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`) and the build-level completeness rules (`M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`) with the enriched synthetic fixture. Merge only when the owner says so.
 
 ## Deviations
 
 - 28 Sep 2026, before execution (codex r1): per-end allowances are `{ datum, beyond_datum_mm }` instead of the spec's strip / insertion / slack split (D5); migration keeps v1 end allowances as `beyond_datum_mm` with unknown datums instead of inventing a split (D7); added `M_LENGTH_DATUM_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE` and load error `migration_failed`.
 - 28 Sep 2026, before execution (codex r2): datums are checked at every route join, not only the wire ends (`check_route_datums`, `M_ROUTE_DATUM_MISMATCH`); a same-node wire needs both allowance datums equal and on that node's kind; `terminal_tip` removed from the datum list (D15, a spec deviation); the migration test matrix covers evidence, approvals and rejections; batch tests cover old allowance payloads and opaque old evidence values.
-- 28 Sep 2026, Task 4 execution: no deviations from the task-4 brief. Fixture, tests, implementation and docs match the brief's exact code and text verbatim.
+- 28 Sep 2026, Task 4 execution: no deviations from the task-4 brief.
 - 28 Sep 2026, final fix wave (whole-branch review plus codex astra, F1 to F8): F1 `derive_bom` no longer counts a cut length of 0 or less as wire quantity (unknown instead). F2 the reversed-segment join test in `topology.test.ts` now gives `s2` a different datum at each end so reversing its storage is a real check. F3 added coverage for an unknown datum on the leaving side of an internal join, in both `topology.test.ts` and `completeness.test.ts`. F4 `migrate_v1_to_v2` now returns `MigrationStats`, and `load_document` logs `document migrated` with `{ from, to, ...stats }`. F5 `LoadResult`'s ok variant gained `migrated_from` (D12). F6 `trusted_length_origins` is typed `ReadonlySet<Origin>`; `M_LENGTH_DATUM_UNKNOWN` now names the node id next to the side. F7 this doc's header, checkboxes and this bullet. F8 `todo.md` bookkeeping for this wave and the deferred minors.
