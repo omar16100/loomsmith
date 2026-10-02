@@ -1,8 +1,8 @@
 # todo
 
 ## M0 scaffold (27 Sep 2026)
-- [x] Save codex r1/r2 reviews to /Users/macmini/projects/codex/
-- [x] Repo /Users/macmini/projects/loomsmith, git init, branch feat/m0_m1_core
+- [x] Save codex r1/r2 reviews outside this repo
+- [x] Repo init: git init, branch feat/m0_m1_core
 - [x] LICENSE Apache-2.0 (canonical text, sha256 cfc7749b...)
 - [x] docs/27092026_loomsmith_design.md, docs/c4model.md, docs/index.md, THIRD_PARTY_NOTICES.md
 - [x] docs/27092026_loomsmith_plan.md (implementation plan, codex reviewed + findings applied)
@@ -44,7 +44,7 @@
 - [ ] Later: `check_reviews` is O(n^2)
 - [ ] Later: test-coverage minors: memory logger debug, nested strict schemas, `format_issues` root, double-run determinism, `update_project` expect mismatch, seal quantity > 1, tol-null lengths, `round_mm` fractions, MISSING fallbacks
 
-## Residuals from the codex SRS re-check (27 Sep 2026, /Users/macmini/projects/codex/loomsmith_m1_srs_recheck_27092026.txt)
+## Residuals from the codex SRS re-check (27 Sep 2026, external review output not in this repo)
 - [ ] Before M2 (first non-test caller): `derive_test_data` must always build its own index; a stale caller-supplied index can bypass SRS exclusion.
 - [ ] When the API is public: `derive_test_data` ignores non-enumerable `mating_states` keys (JSON inputs are fine).
 - [ ] M1b freeze decision: restoring a value that an older review rejected yields only `W_REVIEW_STALE` (latest-review policy); decide whether any rejection of the current value should block.
@@ -67,3 +67,7 @@
 - [ ] `values_of` and `canonical_json` typing in `migrate/v1_to_v2.ts` hide `undefined` (a missing field and an explicit `null` are not distinguished in the cache)
 - [ ] test gaps: `route_end_datums` with `null` and `[]` ends; same-node wrong kind at `end_a` (only `end_b` is covered); `S_DATUM_NODE_KIND` on `datum_b` (only `datum_a` is covered); `W_LENGTH_OUTSIDE_ESTIMATE` on an unrouted or out-of-scope segment; migration malformed-case assertions are loose prefix matches, not exact; `value_json`/`reviewed_value_json` that is not JSON; non-array collections in the raw document; a migrated v1 document has no structural issues (`validate_structure` on the migrated golden)
 - [ ] fix the `Photos:` label formatting in `docs/data_model.md`
+
+## Open-source publication (02 Oct 2026)
+- [x] Repo-relative paths in docs (local machine paths removed; private references described in words)
+- [x] README added

@@ -1,6 +1,6 @@
 # loomsmith C4 model
 
-Category: Architecture. Source of truth for containers, components, dependencies and data flows. Update on every architecture change. Design rationale: /Users/macmini/projects/loomsmith/docs/27092026_loomsmith_design.md.
+Category: Architecture. Source of truth for containers, components, dependencies and data flows. Update on every architecture change. Design rationale: [27092026_loomsmith_design.md](27092026_loomsmith_design.md).
 
 Last updated: 27 Sep 2026 (M1, `packages/core` implemented on branch `feat/m0_m1_core`, 99 tests
 pass; `packages/cli`, `packages/ingest`, `apps/web`, `eval/` are still target architecture,
@@ -30,7 +30,7 @@ not built).
 
 ## Level 3: core components
 
-Implemented in M1 unless noted. See `/Users/macmini/projects/loomsmith/docs/data_model.md`
+Implemented in M1 unless noted. See [data_model.md](data_model.md)
 for the file format, entity fields, validation codes and derivation rules.
 
 | Component | Responsibility |

@@ -1,9 +1,9 @@
 # loomsmith design spec
 
-Category: Design / spec. Status: approved by owner 27 Sep 2026 (plan-mode approval). Source plan: /Users/macmini/.claude/plans/what-are-the-good-fizzy-newell.md. Reviews: /Users/macmini/projects/codex/loomsmith_direction_review_27092026.txt, /Users/macmini/projects/codex/loomsmith_plan_review_r2_27092026.txt.
+Category: Design / spec. Status: approved by owner 27 Sep 2026 (plan-mode approval). Source plan: the approved design notes (not in this repo). Reviews: an external review (codex, gpt-6-astra) rounds 1 and 2, 27 Sep 2026 (not in this repo).
 
 ## Context
-- Need: 1990 Lexus LS400 UCF10R (Europe RHD) has no purchasable replacement harness (/Users/macmini/projects/ls400/docs/25092026_buyee_wiring_harness_availability.md) and its exact EWD (EWD080Y) is out of print (/Users/macmini/projects/ls400/docs/25092026_wiring_diagram_sources.md). Paid tools are $219+/mo or quote-only; ~20 open-source tools each do one part well, none does the whole job (Appendix).
+- Need: 1990 Lexus LS400 UCF10R (Europe RHD) has no purchasable replacement harness and its exact EWD (EWD080Y) is out of print (both documented in the owner's private vehicle project, not in this repo). Paid tools are $219+/mo or quote-only; ~20 open-source tools each do one part well, none does the whole job (Appendix).
 - Owner decisions: general tool (rebuild existing looms + design new) for the DIY/classic-car community; shared core + CLI + web editor from day one; TypeScript everywhere; may become a SaaS; LLM option that turns schematic diagrams into a harness model; "think from first principles, pick the best options".
 - Reviews: codex astra (gpt-6-astra) round 1 (direction) and round 2 (this plan), 27 Sep 2026; all findings folded in.
 
@@ -22,7 +22,7 @@ Category: Design / spec. Status: approved by owner 27 Sep 2026 (plan-mode approv
 | Reuse | MIT: 0xDevDav (geometry/formboard rendering ideas), harness-studio (validator message style), e-Plan (deterministic Dijkstra). GPL/AGPL/PolyForm/unlicensed: ideas only, clean-room, no code or data | licence boundaries checked by codex (HarnessDesigner DB is GPL-2.0) |
 | Name | `loomsmith` working codename (0 GitHub repos, npm free, .com taken) | `openwiringharness` clashes with lukebikes/OpenWiringHarness (AGPL); fork github.com/omar16100/openwiringharness left untouched |
 | Licence | Apache-2.0 for core/CLI/web; no CLA; future paid cloud in a separate private repo; future parts data CC-BY-4.0 | explicit patent grant + termination, allows proprietary cloud, compatible with borrowed MIT code (codex r2) |
-| OEM data | LS400/EWD-derived data never in the public repo; lives in /Users/macmini/projects/ls400/data/harness/ | service manuals are copyrighted |
+| OEM data | LS400/EWD-derived data never in the public repo; lives in the owner's private vehicle project | service manuals are copyrighted |
 | Stack | TS strict, pnpm workspaces, Node 22+, Vitest, Vite + React + SVG, zod v4 (types + runtime validation + generated JSON Schema), Playwright | one schema source; static offline web app |
 | Format | JSON `*.loom.json`; `format: "loomsmith"`, integer `schema_version`, explicit migrations, reject future versions; opaque tenant-independent ids + human labels; canonical ordering of unordered collections (meaningful sequences like routes keep order) | clean diffs, agent-friendly, sync-ready |
 | Units | `length_mm`, `cross_section_mm2`, `current_a`, `voltage_v`, `temperature_c`; original designation kept ("20 AWG", Toyota "0.5") | nominal sizes are not interchangeable by area |
@@ -33,7 +33,7 @@ Category: Design / spec. Status: approved by owner 27 Sep 2026 (plan-mode approv
 
 ## Architecture (becomes docs/c4model.md)
 ```
-/Users/macmini/projects/loomsmith/
+loomsmith/
   packages/core/src/   schema/ model/ commands/ validate/ derive/ export/ migrate/ assets/ log.ts
   packages/cli/        loomsmith validate | migrate | export | new | apply | ingest
   packages/ingest/     PDF parse -> candidate graph -> LLM resolution -> proposals file
@@ -82,7 +82,7 @@ Each issue: code, severity, JSON path, entity id, fix hint.
 Test data derivation takes: selected harness(es), mating state per mating (connected | disconnected), excluded external components/circuits (SRS excluded by default). Output: expected continuity per net and isolation between nets for that bench setup, plus printable worksheet.
 
 ## LLM "schematic to harness" (sub-project 2)
-- Input: local 1992 EWD PDFs (/Users/macmini/projects/ls400/manuals/1990-1994 (94) UCF10~UCF11/~Electrical Wiring Diagram 92/, 59 vector PDFs; EWD-102 p3 = "INTERIOR LIGHT" with D3, L8, "12 BM3", G–W, no embedded rasters; confirmed by codex r2).
+- Input: local 1992 EWD PDFs (from the owner's private vehicle project, not in this repo; 59 vector PDFs; EWD-102 p3 = "INTERIOR LIGHT" with D3, L8, "12 BM3", G–W, no embedded rasters; confirmed by codex r2).
 - Pipeline: pdf.js text items + drawing operators -> reconstruct transforms, normalise overlapping strokes, separate symbols from conductors -> candidate graph (keep ambiguity, never merge nets prematurely) -> LLM resolves label ownership, off-page continuations, splices, grounds, harness assignment -> proposals file (commands + page/bbox citations, origin inferred) -> core validate -> bounded repair loop -> review in web (source crop beside each item; accept/edit/reject).
 - Scope limit: EWDs give connectivity and harness assignment, not lengths; physical layer comes from measuring the loom.
 - Known hard cases to test first: conductors crossing without a junction marker (e.g. EWD-102 p3, branch from B39 toward BX1 crossing the conductor to BV1), striped conductors drawn as multiple strokes, lines inside component symbols, off-page continuations.
@@ -92,9 +92,9 @@ Test data derivation takes: selected harness(es), mating state per mating (conne
 - Later: raster (scanned) pages via vision; MCP server over the command API.
 
 ## Milestones
-- M0 scaffold: /Users/macmini/projects/loomsmith, git init, feature branch, docs (index, c4model, design, plan), todo.md, Apache-2.0 LICENSE, CI config, parsnip entity.
+- M0 scaffold: this repo, git init, feature branch, docs (index, c4model, design, plan), todo.md, Apache-2.0 LICENSE, CI config, parsnip entity.
 - M1 model draft: zod schema + command log + validation + derivations; golden synthetic fixture (splice, repeated colours, unknown measurement, unknown wire spec, double-wire termination, base/stripe colours, terminal/seal quantities, mated connectors across two harnesses, schematic-only wire).
-- M1b pre-freeze check: owner picks one bounded LS400 sub-harness and captures photos + measurements; model it by hand (connections from EWD, lengths measured) in /Users/macmini/projects/ls400/data/harness/. Schema frozen only when fixture + LS400 model both fit.
+- M1b pre-freeze check: owner picks one bounded LS400 sub-harness and captures photos + measurements; model it by hand (connections from EWD, lengths measured) in the owner's private vehicle project. Schema frozen only when fixture + LS400 model both fit.
 - M2 CLI: validate, migrate, export (wire_list.csv, bom.csv, test_data.csv, test_worksheet.html, assembly.svg), new, apply; `--json`.
 - M3 ingest spike (parallel with M2, before substantial web work): 5 LS400 EWD pages, candidate overlay, hand labels, metrics, go/no-go report; fixtures and eval artifacts kept in eval/.
 - M4 web editor v1: open/save (File System Access API + download fallback), IndexedDB autosave + crash recovery, tables (connectors, cavities, contacts, wires, segments), SVG topology view, issues panel, undo/redo, exports via core.
@@ -122,7 +122,7 @@ Test data derivation takes: selected harness(es), mating state per mating (conne
 - Codex astra review each milestone; docs (index, c4model, plan, todo) updated each milestone.
 
 ## Process
-- After approval: save codex r1/r2 outputs to /Users/macmini/projects/codex/ (loomsmith_direction_review_27092026.txt, loomsmith_plan_review_r2_27092026.txt); write docs/27092026_loomsmith_design.md (spec) and the implementation plan (writing-plans) as docs/27092026_loomsmith_plan.md; register in docs/index.md.
+- After approval: save codex r1/r2 outputs outside this repo; write docs/27092026_loomsmith_design.md (spec) and the implementation plan (writing-plans) as docs/27092026_loomsmith_plan.md; register in docs/index.md.
 - Git: local repo, feature branches, codex review before commits; GitHub repo creation (private) and any publishing only after owner OK.
 
 ## Appendix: survey highlights (25 Sep 2026, verified via gh api)

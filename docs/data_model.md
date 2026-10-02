@@ -7,18 +7,18 @@ Category: Reference.
 This document describes the file format, entities, evidence/review model, command log
 and derivations implemented in `@loomsmith/core` as of M1 (Task 10 plus the final review
 fixes F1 to F5). It also covers schema v2 length capture
-(`/Users/macmini/projects/loomsmith/docs/28092026_length_capture_plan.md`): asymmetric
+([28092026_length_capture_plan.md](28092026_length_capture_plan.md)): asymmetric
 tolerance bands, per-segment-end datums, length estimates and signed per-end allowances,
 the version 1 to 2 migration, and the completeness rules that block release on them. It
 documents only
-what the code in `/Users/macmini/projects/loomsmith/packages/core/src` does; it is not a
+what the code in [packages/core/src](../packages/core/src) does; it is not a
 design proposal. Source of truth for each section is the file named in that section.
 
 Last verified: 28 Sep 2026, against branch `feat/length_capture`, 137 passing tests (14 files).
 
 ## 2. File format
 
-Defined in `/Users/macmini/projects/loomsmith/packages/core/src/schema/document.ts`.
+Defined in [document.ts](../packages/core/src/schema/document.ts).
 
 A loomsmith document is a single JSON object:
 
@@ -36,7 +36,7 @@ A loomsmith document is a single JSON object:
 `harnesses`, `parts`, `connectors`, `contacts`, `splices`, `ground_points`, `wires`,
 `nodes`, `segments`, `matings`, `assets`, `evidence`, `reviews`, `view_positions`.
 
-**Canonical ordering** (`/Users/macmini/projects/loomsmith/packages/core/src/model/canonical.ts`):
+**Canonical ordering** ([canonical.ts](../packages/core/src/model/canonical.ts)):
 - Each collection is a set, sorted by `id` (`compare_ids`, plain string comparison).
 - Arrays inside an entity (`ends`, `route`, `cavities`, `stripe_colours`, `cavity_map`) keep
   the order the caller gave them; they are not sorted.
@@ -44,13 +44,13 @@ A loomsmith document is a single JSON object:
   trailing newline. `canonical_json` (no indent, sorted keys) is used internally for
   content-equality comparisons (evidence/review staleness, command `expect`/`expect_entity`).
 
-**Id rules** (`/Users/macmini/projects/loomsmith/packages/core/src/schema/primitives.ts`):
+**Id rules** ([primitives.ts](../packages/core/src/schema/primitives.ts)):
 - `id_schema`: `^(?!\.\.?$)[A-Za-z0-9_.-]{1,128}$`, a restricted alphabet so composite keys
   such as `contact:<id>` or `<connector_id>/<cavity_id>` cannot collide with a real id. The
   ids `.` and `..` are rejected, so an id used as a file or path name never means "this
   directory" or "the parent directory".
 - Ids are unique across all collections except `view_positions`
-  (`build_index` in `/Users/macmini/projects/loomsmith/packages/core/src/model/doc_index.ts`
+  (`build_index` in [doc_index.ts](../packages/core/src/model/doc_index.ts)
   skips `view_positions` when building the global `by_id` map and collecting `duplicate_ids`).
   `view_positions` ids are checked for uniqueness only within their own collection
   (`S_DUPLICATE_ID` in `structural.ts`).
@@ -122,8 +122,8 @@ Shared substructures (`primitives.ts`):
 
 ## 4. Evidence and review
 
-Defined in `/Users/macmini/projects/loomsmith/packages/core/src/validate/review_state.ts`
-and `/Users/macmini/projects/loomsmith/packages/core/src/schema/document.ts`.
+Defined in [review_state.ts](../packages/core/src/validate/review_state.ts)
+and [document.ts](../packages/core/src/schema/document.ts).
 
 - Evidence and reviews address **top-level fields only** in M1 (for example `spec` on a
   wire, not `spec.cross_section_mm2`). `make_evidence`/`make_review` throw if the field is
@@ -157,9 +157,9 @@ and `/Users/macmini/projects/loomsmith/packages/core/src/schema/document.ts`.
 
 ## 5. Command log
 
-Defined in `/Users/macmini/projects/loomsmith/packages/core/src/schema/commands.ts`,
-`/Users/macmini/projects/loomsmith/packages/core/src/commands/apply_command.ts` and
-`/Users/macmini/projects/loomsmith/packages/core/src/commands/apply_batch.ts`.
+Defined in [commands.ts](../packages/core/src/schema/commands.ts),
+[apply_command.ts](../packages/core/src/commands/apply_command.ts) and
+[apply_batch.ts](../packages/core/src/commands/apply_batch.ts).
 
 - **Ops**: `insert` (`collection`, `entity`), `update` (`collection`, `id`, `set`,
   optional `expect`), `delete` (`collection`, `id`, optional `expect_entity`), and
@@ -209,9 +209,9 @@ Defined in `/Users/macmini/projects/loomsmith/packages/core/src/schema/commands.
 
 ## 6. Validation codes
 
-From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts` (level
+From [structural.ts](../packages/core/src/validate/structural.ts) (level
 `structural`, all `severity: error`) and
-`/Users/macmini/projects/loomsmith/packages/core/src/validate/completeness.ts` (level
+[completeness.ts](../packages/core/src/validate/completeness.ts) (level
 `completeness`).
 
 ### Structural (`S_*`, error)
@@ -267,7 +267,7 @@ From `/Users/macmini/projects/loomsmith/packages/core/src/validate/structural.ts
 
 `validate()` (`validate.ts`) always runs structural checks; completeness checks run only
 at `level: "build"`, scoped to `harness_ids` via `ScopeOptions`/`in_scope`
-(`/Users/macmini/projects/loomsmith/packages/core/src/model/scope.ts`).
+([scope.ts](../packages/core/src/model/scope.ts)).
 `is_release_ready(issues)` is `true` iff no issue has `severity: "error"` (warnings do not
 block).
 
@@ -276,7 +276,7 @@ block).
 All pure functions of the document (plus, where noted, caller-supplied options); nothing
 here is stored in the document.
 
-- **Route status** (`analyse_route`, `/Users/macmini/projects/loomsmith/packages/core/src/derive/topology.ts`):
+- **Route status** (`analyse_route`, [topology.ts](../packages/core/src/derive/topology.ts)):
   one of `unrouted` (`route` is `null`), `open_end` (either end is `open`),
   `missing_endpoint_node` (an end's connector/splice/ground_point has no topology node),
   `not_contiguous` (the listed segments do not chain from the start node to the end node),
@@ -297,7 +297,7 @@ here is stored in the document.
   A tolerance band may be unknown (`null` in the cut length) without blocking release: no
   completeness rule requires `tol_plus_mm`/`tol_minus_mm` to be known, only `nominal_mm`,
   the datums and the allowances.
-- **Nets** (`derive_nets`, `/Users/macmini/projects/loomsmith/packages/core/src/derive/nets.ts`):
+- **Nets** (`derive_nets`, [nets.ts](../packages/core/src/derive/nets.ts)):
   union-find over wire endpoints (`contact:<id>`, `splice:<id>`, `ground_point:<id>`; `open`
   ends contribute no key) plus the cavity pairs of every active mating. `active_matings`
   (exported from `nets.ts`, the one place this decision is made, also used by
@@ -307,7 +307,7 @@ here is stored in the document.
   Each net's `net_id` is its lowest endpoint key (lexicographic); `endpoint_keys` and
   `wire_ids` are sorted.
 - **Bench boundary rules** (`derive_test_data`,
-  `/Users/macmini/projects/loomsmith/packages/core/src/derive/test_data.ts`): the input is a
+  [test_data.ts](../packages/core/src/derive/test_data.ts)): the input is a
   `TestBoundary` (`harness_ids`, `mating_states`, `excluded_connector_ids`, `include_srs`)
   and the result is a `TestDataResult`: `{ ok: true, data: TestData }` or
   `{ ok: false, problems: BoundaryProblem[] }`. The boundary **fails closed**: if any
@@ -340,12 +340,12 @@ here is stored in the document.
   `isolation` pairs the first point of each remaining net with the first point of every
   later net (no self-pairs, no duplicate unordered pairs).
 - **Wire list** (`derive_wire_list`,
-  `/Users/macmini/projects/loomsmith/packages/core/src/derive/wire_list.ts`): one row per
+  [wire_list.ts](../packages/core/src/derive/wire_list.ts)): one row per
   wire in scope with harness label, wire label, `from`/`to` endpoint labels
   (`"<owner_label>:<cavity_label>"`, or `MISSING(<id>)`/`OPEN`), `cross_section_mm2`,
   `designation`, a `colour` code (`base_colour` plus `stripe_colours` joined with `-`, or
   `UNKNOWN`), route status and cut length. Sorted by harness label then wire label.
-- **BOM** (`derive_bom`, `/Users/macmini/projects/loomsmith/packages/core/src/derive/bom.ts`):
+- **BOM** (`derive_bom`, [bom.ts](../packages/core/src/derive/bom.ts)):
   one line per distinct `(category, part_id, identification)` for housings, terminals,
   seals (quantity from the seal's own `quantity`) and splices. A part use with no
   `part_id` is grouped under the empty-string sentinel `""` (never a valid id, so a real

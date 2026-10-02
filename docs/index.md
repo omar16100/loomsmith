@@ -5,7 +5,7 @@ loomsmith (working codename) is an open-source wiring harness design tool: one h
 ## Conventions
 - Dated docs: `DDMMYYYY_topic.md` (plans, specs, reviews, point-in-time research).
 - Evergreen docs: `topic.md` (architecture, data model, reference that stays valid).
-- No em dashes in prose. Full paths when referencing files.
+- No em dashes in prose. Repo-relative paths and links when referencing files; never local machine paths.
 - Read `c4model.md` before any architecture change and update it after.
 
 ## Categories and required sections

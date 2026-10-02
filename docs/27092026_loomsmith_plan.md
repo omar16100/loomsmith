@@ -10,7 +10,7 @@ Category: Plan / task record. Status section at the end.
 
 **Tech Stack:** pnpm 10 workspaces, Node >= 22.18, TypeScript 7.0.2 (strict, `noEmit`, `.ts` imports), Vitest 5.0.2, zod 4.6.5.
 
-**Spec:** /Users/macmini/projects/loomsmith/docs/27092026_loomsmith_design.md (architecture: /Users/macmini/projects/loomsmith/docs/c4model.md)
+**Spec:** [27092026_loomsmith_design.md](27092026_loomsmith_design.md) (architecture: [c4model.md](c4model.md))
 
 ## Global Constraints
 
@@ -27,7 +27,7 @@ Category: Plan / task record. Status section at the end.
 ## File map
 
 ```
-/Users/macmini/projects/loomsmith/
+loomsmith/
   package.json  pnpm-workspace.yaml  tsconfig.base.json  vitest.config.ts  .gitignore  .github/workflows/ci.yml
   examples/synthetic_milestone/synthetic_milestone.loom.json      (generated golden, Task 6)
   packages/core/
@@ -78,7 +78,7 @@ Category: Plan / task record. Status section at the end.
 - [ ] **Step 1: Confirm the branch and write the root config**
 
 ```bash
-cd /Users/macmini/projects/loomsmith && git branch --show-current
+git branch --show-current
 ```
 Expected: `feat/m0_m1_core` (created and renamed during M0).
 
@@ -204,7 +204,7 @@ jobs:
 }
 ```
 
-Run: `cd /Users/macmini/projects/loomsmith && pnpm install`
+Run: `pnpm install`
 Expected: lockfile `pnpm-lock.yaml` created, no errors.
 
 - [ ] **Step 3: Write the failing logger test**
@@ -3301,7 +3301,7 @@ Sections, with content taken from the implemented code:
 
 - [ ] **Step 3: Full verification**
 
-Run: `cd /Users/macmini/projects/loomsmith && CI=true pnpm check`
+Run: `CI=true pnpm check`
 Expected: typecheck clean; every test file PASS; no snapshot written (CI mode fails on missing snapshots).
 
 Run:
@@ -3313,20 +3313,20 @@ Expected: only `purity scan done` is printed (no matches). `node:` imports and D
 - [ ] **Step 4: Codex review of the branch**
 
 ```bash
-cd /Users/macmini/projects/loomsmith && codex exec --skip-git-repo-check -c 'model="gpt-6-astra"' -c 'approval_policy="never"' -s read-only \
-  -o /Users/macmini/projects/codex/loomsmith_m1_core_review_27092026.txt - <<'PROMPT'
-Review the loomsmith M1 core on branch feat/m0_m1_core in /Users/macmini/projects/loomsmith (read-only).
+codex exec --skip-git-repo-check -c 'model="gpt-6-astra"' -c 'approval_policy="never"' -s read-only \
+  -o loomsmith_m1_core_review_27092026.txt - <<'PROMPT'
+Review the loomsmith M1 core on branch feat/m0_m1_core (read-only).
 Spec: docs/27092026_loomsmith_design.md; plan: docs/27092026_loomsmith_plan.md; code: packages/core/src; tests: packages/core/test.
 Report correctness bugs, spec deviations, determinism or purity leaks, and missing tests, prioritized, with file:line.
 PROMPT
 ```
-Apply confirmed findings with a failing test first, rerun `CI=true pnpm check`.
+Review output saved outside this repo (not included here). Apply confirmed findings with a failing test first, rerun `CI=true pnpm check`.
 
 - [ ] **Step 5: Commit and record**
 
 ```bash
 git add -A && git commit -m "docs: data model reference, c4 and plan status for M1"
-parsnip entity add --type project -o "loomsmith: open-source wiring harness tool, repo /Users/macmini/projects/loomsmith, Apache-2.0" -o "M0+M1 core done 27 Sep 2026 on branch feat/m0_m1_core: schema, command log, validation, derivations" -o "spec docs/27092026_loomsmith_design.md, plan docs/27092026_loomsmith_plan.md" --tag loomsmith --tag wiring-harness --tag opensource -p loomsmith "loomsmith_project"
+parsnip entity add --type project -o "loomsmith: open-source wiring harness tool, Apache-2.0" -o "M0+M1 core done 27 Sep 2026 on branch feat/m0_m1_core: schema, command log, validation, derivations" -o "spec docs/27092026_loomsmith_design.md, plan docs/27092026_loomsmith_plan.md" --tag loomsmith --tag wiring-harness --tag opensource -p loomsmith "loomsmith_project"
 ```
 
 ---
@@ -3353,7 +3353,7 @@ parsnip entity add --type project -o "loomsmith: open-source wiring harness tool
 - Generic `insert` / `update` / `delete` commands plus whole-document structural validation after each batch, instead of one handler per domain command. Keeps the command log small and sync-friendly; domain macros can expand to these later.
 - Reviews store `reviewed_value_json` (canonical json of the approved value), so staleness is derived and never needs a write.
 - Unlisted matings default to disconnected in bench test data and to the caller's choice in `derive_nets`.
-- Codex review of this plan (27 Sep 2026, /Users/macmini/projects/codex/loomsmith_impl_plan_review_27092026.txt) confirmed all code typechecks and all fixture expectations; its design findings were applied:
+- An external review (codex) of this plan, 27 Sep 2026, confirmed all code typechecks and all fixture expectations; its design findings were applied:
   - A net touching an SRS (or listed) connector is excluded whole from bench tests, not just its SRS probe points.
   - `identified` / `candidate` part uses must carry a `part_id` (`S_PART_IDENTITY`).
   - A valid document stays valid; an invalid one accepts only repair batches (`repair_required`), compared by key plus message so a worsening issue is caught.

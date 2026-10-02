@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) after codex astra review r1 (/Users/macmini/projects/codex/loomsmith_length_capture_plan_review_28092026.txt). Branch `feat/length_capture` (from `main` ce77d35).
+Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) after an external review (codex astra) round 1, 28 Sep 2026 (not in this repo). Branch `feat/length_capture` (from `main` ce77d35).
 
 **Goal:** Let a document record how a harness was measured (asymmetric tolerance, measurement points at both ends of every segment, a pre-measurement estimate, per-end allowances given from a stated datum and allowed to be unknown) and block release outputs until every routed length is measured, pinned to its datums and backed by measured or documented evidence.
 
@@ -10,7 +10,7 @@ Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) af
 
 **Tech Stack:** TypeScript 7.0.2 (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, verbatimModuleSyntax, erasableSyntaxOnly), zod 4.6.5, Vitest 5.0.2, pnpm 10, Node 22.18 or later.
 
-**Spec:** /Users/macmini/.claude/plans/what-are-the-good-fizzy-newell.md (approved 28 Sep 2026, recommended approach steps 2 and 3), within /Users/macmini/projects/loomsmith/docs/27092026_loomsmith_design.md. Current format reference: /Users/macmini/projects/loomsmith/docs/data_model.md.
+**Spec:** the approved design notes (not in this repo; approved 28 Sep 2026, recommended approach steps 2 and 3), within [27092026_loomsmith_design.md](27092026_loomsmith_design.md). Current format reference: [data_model.md](data_model.md).
 
 ## Global Constraints
 
@@ -1647,7 +1647,7 @@ git commit -m "feat(core): block unmeasured or unpinned lengths and unknown allo
 
 ## Status
 
-Planned 28 Sep 2026. Revision 2 after codex astra r1 (3 blocking, 4 should-fix, 1 nit, all addressed). Revision 3 after codex astra r2 (/Users/macmini/projects/codex/loomsmith_length_capture_plan_review_r2_28092026.txt: 2 blocking, 2 should-fix, 1 nit, all addressed; r2 confirmed the r1 fixes, the arithmetic, issue order and type-checking at every task boundary). Codex astra r3 (/Users/macmini/projects/codex/loomsmith_length_capture_plan_review_r3_28092026.txt): no runtime defect; one missing regression (unknown datum at an internal join) added to Tasks 1 and 4.
+Planned 28 Sep 2026. Revision 2 after codex astra r1 (3 blocking, 4 should-fix, 1 nit, all addressed). Revision 3 after codex astra r2 (external review, not in this repo: 2 blocking, 2 should-fix, 1 nit, all addressed; r2 confirmed the r1 fixes, the arithmetic, issue order and type-checking at every task boundary). Codex astra r3 (external review, not in this repo): no runtime defect; one missing regression (unknown datum at an internal join) added to Tasks 1 and 4.
 
 Done (28 Sep 2026). Tasks 1 to 4 implemented on branch `feat/length_capture`: schema v2, the v1-to-v2 migration, structural checks (`S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`) and the build-level completeness rules (`M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`) with the enriched synthetic fixture. `pnpm check` passes: 135 tests (14 files). Merge only when the owner says so.
 
