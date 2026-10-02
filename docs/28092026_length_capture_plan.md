@@ -2,7 +2,7 @@
 
 Steps use checkbox (`- [ ]`) syntax for tracking.
 
-Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) after an external review (codex astra) round 1, 28 Sep 2026 (not in this repo). Branch `feat/length_capture` (from `main` ce77d35).
+Category: Plan / task record. Status: done 28 Sep 2026, merged to main 29 Sep 2026. Branch `feat/length_capture` (from `main` ce77d35).
 
 **Goal:** Let a document record how a harness was measured (asymmetric tolerance, measurement points at both ends of every segment, a pre-measurement estimate, per-end allowances given from a stated datum and allowed to be unknown) and block release outputs until every routed length is measured, pinned to its datums and backed by measured or documented evidence.
 
@@ -10,7 +10,7 @@ Category: Plan / task record. Status: done 28 Sep 2026, revision 3 (executed) af
 
 **Tech Stack:** TypeScript 7.0.2 (strict, noUncheckedIndexedAccess, exactOptionalPropertyTypes, verbatimModuleSyntax, erasableSyntaxOnly), zod 4.6.5, Vitest 5.0.2, pnpm 10, Node 22.18 or later.
 
-**Spec:** the approved design notes (not in this repo; approved 28 Sep 2026, recommended approach steps 2 and 3), within [27092026_loomsmith_design.md](27092026_loomsmith_design.md). Current format reference: [data_model.md](data_model.md).
+**Spec:** [27092026_loomsmith_design.md](27092026_loomsmith_design.md) (length capture, milestone M1b). Current format reference: [data_model.md](data_model.md).
 
 ## Global Constraints
 
@@ -1647,9 +1647,9 @@ git commit -m "feat(core): block unmeasured or unpinned lengths and unknown allo
 
 ## Status
 
-Planned 28 Sep 2026. Revision 2 after an external review (codex astra r1), revision 3 after a second one (r2); a third (r3) led to a regression test for an unknown datum at an internal join in Tasks 1 and 4. The reviews are not in this repo.
+Planned 28 Sep 2026 and revised three times after external review before execution.
 
-Done (28 Sep 2026). Tasks 1 to 4 implemented on branch `feat/length_capture`: schema v2, the v1-to-v2 migration, structural checks (`S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`) and the build-level completeness rules (`M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`) with the enriched synthetic fixture. Merge only when the owner says so.
+Done (28 Sep 2026). Tasks 1 to 4 implemented on branch `feat/length_capture`: schema v2, the v1-to-v2 migration, structural checks (`S_DATUM_NODE_KIND`, `S_LENGTH_ESTIMATE_RANGE`) and the build-level completeness rules (`M_LENGTH_UNMEASURED`, `M_LENGTH_DATUM_UNKNOWN`, `M_ROUTE_DATUM_MISMATCH`, `M_ALLOWANCE_UNKNOWN`, `M_ALLOWANCE_DATUM_MISMATCH`, `M_CUT_LENGTH_NOT_POSITIVE`, `W_LENGTH_OUTSIDE_ESTIMATE`) with the enriched synthetic fixture. Merged to main 29 Sep 2026.
 
 ## Deviations
 

@@ -1,6 +1,6 @@
 # loomsmith design spec
 
-Category: Design / spec. Status: approved by owner 27 Sep 2026 (plan-mode approval). Source plan: the approved design notes (not in this repo). Reviews: an external review (codex, gpt-6-astra) rounds 1 and 2, 27 Sep 2026 (not in this repo).
+Category: Design / spec. Status: approved by the owner 27 Sep 2026.
 
 ## Context
 - Need: a tool that supports harness design and repair (rebuilding an existing loom, designing a new one). Pilot: the owner's pilot vehicle (a 1990s car); its data stays outside this repo. The open-source tools reviewed each cover part of the workflow (Appendix).
